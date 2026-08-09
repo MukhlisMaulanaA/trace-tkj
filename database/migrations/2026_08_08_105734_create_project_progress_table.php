@@ -10,7 +10,7 @@ return new class extends Migration {
    */
   public function up(): void
   {
-    Schema::create('project_progresses', function (Blueprint $table) {
+    Schema::create('project_progress', function (Blueprint $table) {
       $table->id();
       $table->string('project_id'); // Foreign key ke ID Project (string)
       $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
@@ -27,6 +27,6 @@ return new class extends Migration {
    */
   public function down(): void
   {
-    Schema::dropIfExists('project_progresses');
+    Schema::dropIfExists('project_progress');
   }
 };
