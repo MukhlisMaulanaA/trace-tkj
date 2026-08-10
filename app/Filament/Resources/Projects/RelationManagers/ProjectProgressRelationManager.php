@@ -12,73 +12,108 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ProjectProgressRelationManager extends RelationManager
 {
-    protected static string $relationship = 'progresses';
+  protected static string $relationship = 'progresses';
 
-    protected static ?string $title = 'Timeline Progres';
+  protected static ?string $title = 'Timeline Progres';
 
-    protected static ?string $recordTitleAttribute = 'keterangan';
+  protected static ?string $recordTitleAttribute = 'keterangan';
 
-    public function form(Schema $schema): Schema
-    {
-        return $schema->components([
-            Section::make('Data Progress')
-                ->schema([
-                    Grid::make(2)->schema([
-                        DateTimePicker::make('waktu_progres')
-                            ->label('Waktu Progres')
-                            ->required(),
+  /**
+   * Progress dapat dikelola langsung dari halaman View Project.
+   */
+  public function isReadOnly(): bool
+  {
+    return false;
+  }
 
-                        TextInput::make('persentase')
-                            ->label('Persentase')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->suffix('%')
-                            ->required(),
-                    ]),
+  public function form(Schema $schema): Schema
+  {
+    return $schema->components([
+      Section::make('Data Progress')
+        ->schema([
+          Grid::make(2)->schema([
+            DateTimePicker::make('waktu_progres')
+              ->label('Waktu Progres')
+              ->required(),
 
-                    Textarea::make('keterangan')
-                        ->label('Keterangan')
-                        ->rows(4)
-                        ->required()
-                        ->columnSpanFull(),
-                ]),
-        ]);
-    }
+            TextInput::make('persentase')
+              ->label('Persentase')
+              ->numeric()
+              ->minValue(0)
+              ->maxValue(100)
+              ->suffix('%')
+              ->required(),
+          ]),
 
-    public function table(Table $table): Table
-    {
-        return $table
-            ->defaultSort('waktu_progres', 'desc')
-            ->columns([
-                TextColumn::make('waktu_progres')
-                    ->label('Waktu')
-                    ->dateTime('d M Y H:i')
-                    ->sortable(),
-                TextColumn::make('persentase')
-                    ->label('Progress')
-                    ->suffix('%')
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('keterangan')
-                    ->label('Keterangan')
-                    ->wrap(),
-                TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->headerActions([
-                CreateAction::make(),
-            ])
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ]);
-    }
+          Textarea::make('keterangan')
+            ->label('Keterangan')
+            ->rows(4)
+            ->required()
+            ->columnSpanFull(),
+        ]),
+    ]);
+  }
+
+  public function table(Table $table): Table
+  {
+    return $table
+      ->heading('Timeline Progres')
+
+      /*
+       * Header custom:
+       * menampilkan progress terkini + progress bar.
+       */
+      ->header(view(
+        'filament.tables.headers.project-progress-header',
+        [
+          'project' => $this->getOwnerRecord(),
+        ],
+      ))
+
+      /*
+       * Timeline harus chronological:
+       * Project Created -> progress lama -> progress terbaru.
+       */
+      ->defaultSort('waktu_progres', 'asc')
+
+      ->paginated(false)
+
+      ->striped(false)
+
+      ->columns([
+        ViewColumn::make('timeline')
+          ->label('')
+          ->view('filament.tables.columns.project-progress-timeline'),
+      ])
+
+      ->headerActions([
+        CreateAction::make()
+          ->label('Tambah Progress')
+          ->mutateFormDataUsing(function (array $data): array {
+            $data['is_system'] = false;
+
+            return $data;
+          }),
+      ])
+
+      ->recordActions([
+        EditAction::make()
+          ->label('Update')
+          ->visible(
+            fn(Model $record): bool => !$record->is_system
+          ),
+
+        DeleteAction::make()
+          ->label('Delete')
+          ->visible(
+            fn(Model $record): bool => !$record->is_system
+          ),
+      ]);
+  }
 }

@@ -35,6 +35,15 @@ class Project extends Model
         $project->id = static::generateCustomId();
       }
     });
+
+    static::created(function ($project) {
+      $project->progresses()->create([
+        'waktu_progres' => $project->created_at,
+        'persentase' => 0,
+        'keterangan' => 'Project Created',
+        'is_system' => true,
+      ]);
+    });
   }
 
   public static function generateCustomId(): string
@@ -67,6 +76,6 @@ class Project extends Model
 
   public function progresses(): \Illuminate\Database\Eloquent\Relations\HasMany
   {
-    return $this->hasMany(ProjectProgress::class)->orderBy('waktu_progres', 'desc');
+    return $this->hasMany(ProjectProgress::class);
   }
 }

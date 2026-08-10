@@ -15,12 +15,16 @@ class ProjectProgress extends Model
     'waktu_progres',
     'persentase',
     'keterangan',
+    'is_system',
+
   ];
 
   protected function casts(): array
   {
     return [
       'waktu_progres' => 'datetime',
+      'is_system' => 'boolean',
+
     ];
   }
 
