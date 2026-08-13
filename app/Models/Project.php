@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\ProjectProgress;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
@@ -74,8 +75,13 @@ class Project extends Model
     return $prefixCode . $newSequence;
   }
 
-  public function progresses(): \Illuminate\Database\Eloquent\Relations\HasMany
+  public function progresses(): HasMany
   {
     return $this->hasMany(ProjectProgress::class);
+  }
+
+  public function purchaseOrders(): HasMany
+  {
+    return $this->hasMany(PurchaseOrder::class, 'project_id', 'id');
   }
 }
