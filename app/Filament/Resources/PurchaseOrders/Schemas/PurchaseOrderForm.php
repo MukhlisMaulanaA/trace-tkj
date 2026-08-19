@@ -33,12 +33,21 @@ class PurchaseOrderForm
               'md' => 2,
             ])
               ->schema([
+                TextInput::make('po_code')
+                  ->label('ID PO')
+                  ->disabled()
+                  ->dehydrated(false)
+                  ->placeholder('Otomatis')
+                  ->helperText('ID PO dibuat otomatis oleh sistem.'),
+
                 TextInput::make('po_number')
                   ->label('Nomor PO')
-                  ->placeholder('Otomatis saat PO dibuat')
-                  ->disabled()
-                  ->dehydrated()
-                  ->unique(ignoreRecord: true),
+                  ->required()
+                  ->unique(ignoreRecord: true)
+                  ->placeholder('Masukkan nomor PO sesuai dokumen/client')
+                  ->helperText(
+                    'Format nomor PO bebas sesuai kebutuhan project/client.'
+                  ),
 
                 DatePicker::make('po_date')
                   ->label('Tanggal PO')
@@ -138,6 +147,26 @@ class PurchaseOrderForm
                   ),
               ]),
           ]),
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAJAK
+        |--------------------------------------------------------------------------
+        */
+
+        Section::make('Pajak')
+          ->description('Pengaturan pajak Purchase Order')
+          ->icon('heroicon-o-receipt-percent')
+          ->schema([
+            \Filament\Forms\Components\Toggle::make('ppn_enabled')
+              ->label('Terapkan PPN')
+              ->helperText(
+                'PPN ditampilkan sebagai 12%, tetapi perhitungan menggunakan 11% dari subtotal.'
+              )
+              ->default(false)
+              ->live(),
+          ])
+          ->collapsible(),
 
         /*
         |--------------------------------------------------------------------------

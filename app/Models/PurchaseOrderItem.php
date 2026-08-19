@@ -89,7 +89,7 @@ class PurchaseOrderItem extends Model
     */
 
     static::saved(function (PurchaseOrderItem $item) {
-      $item->updatePurchaseOrderSubtotal();
+      $item->purchaseOrder?->calculateTotals();
     });
 
     /*
@@ -99,7 +99,7 @@ class PurchaseOrderItem extends Model
     */
 
     static::deleted(function (PurchaseOrderItem $item) {
-      $item->updatePurchaseOrderSubtotal();
+      $item->purchaseOrder?->calculateTotals();
     });
   }
 
@@ -109,17 +109,17 @@ class PurchaseOrderItem extends Model
   |--------------------------------------------------------------------------
   */
 
-  public function updatePurchaseOrderSubtotal(): void
-  {
-    $subtotal = static::query()
-      ->where(
-        'purchase_order_id',
-        $this->purchase_order_id
-      )
-      ->sum('total_price');
+  // public function updatePurchaseOrderSubtotal(): void
+  // {
+  //   $subtotal = static::query()
+  //     ->where(
+  //       'purchase_order_id',
+  //       $this->purchase_order_id
+  //     )
+  //     ->sum('total_price');
 
-    $this->purchaseOrder()->update([
-      'subtotal' => $subtotal,
-    ]);
-  }
+  //   $this->purchaseOrder()->update([
+  //     'subtotal' => $subtotal,
+  //   ]);
+  // }
 }

@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Grouping\Group;
 
 class ItemsRelationManager extends RelationManager
 {
@@ -113,20 +114,18 @@ class ItemsRelationManager extends RelationManager
   {
     return $table
       ->defaultSort('item_no', 'asc')
+      ->defaultGroup(
+        Group::make('section')
+          ->label('Section')
+      )
       ->paginated(false)
       ->striped(false)
       ->columns([
-        TextColumn::make('item_no')
+        TextColumn::make('no')
           ->label('No.')
+          ->rowIndex()
           ->width('70px')
           ->alignCenter(),
-
-        TextColumn::make('section')
-          ->label('Section')
-          ->placeholder('-')
-          ->badge()
-          ->color('gray')
-          ->toggleable(),
 
         TextColumn::make('description')
           ->label('Description')
@@ -160,7 +159,9 @@ class ItemsRelationManager extends RelationManager
             fn(?string $state): ?string => $state
           )
           ->placeholder('-')
-          ->toggleable(isToggledHiddenByDefault: true),
+          ->toggleable(
+            isToggledHiddenByDefault: true
+          ),
       ])
       ->headerActions([
         CreateAction::make()
@@ -188,7 +189,15 @@ class ItemsRelationManager extends RelationManager
             fn(): bool =>
             $this->getOwnerRecord()->status === 'draft'
           ),
-      ]);
+      ])
+      ->contentFooter(
+        fn() => view(
+          'filament.purchase-orders.relation-managers.items-summary',
+          [
+            'record' => $this->getOwnerRecord(),
+          ]
+        )
+      );
   }
 
   /*
@@ -208,4 +217,11 @@ class ItemsRelationManager extends RelationManager
 
     $set('total_price', number_format($total, 2, '.', ''));
   }
+
+  // public function render(): \Illuminate\Contracts\View\View
+  // {
+  //   return view('filament.purchase-orders.relation-managers.items-summary', [
+  //     'record' => $this->getOwnerRecord(),
+  //   ]);
+  // }
 }
