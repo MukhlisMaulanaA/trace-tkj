@@ -29,6 +29,10 @@ class PurchaseOrder extends Model
       }
     });
 
+    static::saving(function (PurchaseOrder $purchaseOrder) {
+      $purchaseOrder->recalculateTotals();
+    });
+
     static::saved(function (PurchaseOrder $purchaseOrder) {
       if (
         $purchaseOrder->wasChanged([
@@ -93,6 +97,10 @@ class PurchaseOrder extends Model
     'ppn_enabled',
     'ppn_amount',
     'grand_total',
+    'discount_enabled',
+    'discount_percent',
+    'discount_amount',
+    'grand_total',
   ];
 
   /*
@@ -108,7 +116,10 @@ class PurchaseOrder extends Model
       'subtotal' => 'decimal:0',
       'ppn_enabled' => 'boolean',
       'ppn_amount' => 'decimal:0',
-      'grand_total' => 'decimal:0',
+      'discount_enabled' => 'boolean',
+      'discount_percent' => 'decimal:2',
+      'discount_amount' => 'decimal:2',
+      'grand_total' => 'decimal:2',
     ];
   }
 
@@ -179,5 +190,67 @@ class PurchaseOrder extends Model
   public function isSubmitted(): bool
   {
     return $this->status === 'submitted';
+  }
+
+  public function recalculateTotals(): void
+  {
+    $subtotal = (float) ($this->subtotal ?? 0);
+
+    /*
+    |--------------------------------------------------------------------------
+    | PPN
+    |--------------------------------------------------------------------------
+    | Display : 12%
+    | Actual  : 11%
+    |--------------------------------------------------------------------------
+    */
+
+    $ppnAmount = 0;
+
+    if ($this->ppn_enabled) {
+      $ppnAmount = round($subtotal * 0.11);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTAL SETELAH PPN
+    |--------------------------------------------------------------------------
+    */
+
+    $totalAfterPpn = $subtotal + $ppnAmount;
+
+    /*
+    |--------------------------------------------------------------------------
+    | DISCOUNT
+    |--------------------------------------------------------------------------
+    */
+
+    $discountAmount = 0;
+
+    if ($this->discount_enabled) {
+      $discountPercent = max(
+        0,
+        min(100, (float) ($this->discount_percent ?? 0))
+      );
+
+      $discountAmount = round(
+        $totalAfterPpn * ($discountPercent / 100)
+      );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GRAND TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+    $grandTotal = max(
+      0,
+      $totalAfterPpn - $discountAmount
+    );
+
+    $this->ppn_amount = $ppnAmount;
+    $this->discount_amount = $discountAmount;
+    $this->grand_total = $grandTotal;
   }
 }

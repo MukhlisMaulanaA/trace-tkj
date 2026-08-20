@@ -11,6 +11,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Toggle;
 
 class PurchaseOrderForm
 {
@@ -154,19 +155,85 @@ class PurchaseOrderForm
         |--------------------------------------------------------------------------
         */
 
-        Section::make('Pajak')
-          ->description('Pengaturan pajak Purchase Order')
-          ->icon('heroicon-o-receipt-percent')
+        // Section::make('Pajak')
+        //   ->description('Pengaturan pajak Purchase Order')
+        //   ->icon('heroicon-o-receipt-percent')
+        //   ->schema([
+        //     \Filament\Forms\Components\Toggle::make('ppn_enabled')
+        //       ->label('Terapkan PPN')
+        //       ->helperText(
+        //         'PPN ditampilkan sebagai 12%, tetapi perhitungan menggunakan 11% dari subtotal.'
+        //       )
+        //       ->default(false)
+        //       ->live(),
+        //   ])
+        //   ->collapsible(),
+
+        Section::make('Perhitungan Purchase Order')
+          ->description('Pengaturan pajak dan diskon Purchase Order')
+          ->icon('heroicon-o-calculator')
           ->schema([
-            \Filament\Forms\Components\Toggle::make('ppn_enabled')
-              ->label('Terapkan PPN')
-              ->helperText(
-                'PPN ditampilkan sebagai 12%, tetapi perhitungan menggunakan 11% dari subtotal.'
-              )
-              ->default(false)
-              ->live(),
+            Grid::make([
+              'default' => 1,
+              'md' => 2,
+            ])
+              ->schema([
+
+                /*
+                |--------------------------------------------------------------------------
+                | PPN
+                |--------------------------------------------------------------------------
+                */
+
+                Toggle::make('ppn_enabled')
+                  ->label('Aktifkan PPN')
+                  ->default(false)
+                  ->live(),
+
+                TextInput::make('ppn_display')
+                  ->label('PPN')
+                  ->default('12%')
+                  ->disabled()
+                  ->dehydrated(false)
+                  ->helperText(
+                    'Ditampilkan 12%, tetapi kalkulasi menggunakan 11%.'
+                  ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | DISCOUNT
+                |--------------------------------------------------------------------------
+                */
+
+                Toggle::make('discount_enabled')
+                  ->label('Aktifkan Diskon')
+                  ->default(false)
+                  ->live()
+                  ->columnSpanFull(),
+
+                TextInput::make('discount_percent')
+                  ->label('Diskon')
+                  ->suffix('%')
+                  ->numeric()
+                  ->minValue(0)
+                  ->maxValue(100)
+                  ->default(0)
+                  ->visible(
+                    fn($get): bool =>
+                    (bool) $get('discount_enabled')
+                  )
+                  ->required(
+                    fn($get): bool =>
+                    (bool) $get('discount_enabled')
+                  )
+                  ->helperText(
+                    'Diskon dihitung dari total setelah PPN.'
+                  ),
+
+              ]),
           ])
-          ->collapsible(),
+          ->columns(1),
+
 
         /*
         |--------------------------------------------------------------------------
