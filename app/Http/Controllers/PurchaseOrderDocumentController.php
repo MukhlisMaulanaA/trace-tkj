@@ -17,7 +17,7 @@ class PurchaseOrderDocumentController extends Controller
     return view(
       'purchase-orders.document',
       [
-        'purchaseOrder' => $purchaseOrder,
+        'record' => $purchaseOrder,
       ]
     );
   }

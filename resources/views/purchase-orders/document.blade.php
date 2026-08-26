@@ -1,16 +1,119 @@
+@php
+  use Illuminate\Support\Str;
+
+  $po = $record;
+
+  /*
+    |--------------------------------------------------------------------------
+    | DATA DASAR
+    |--------------------------------------------------------------------------
+    */
+  $companyName = 'PT. TANJUNG KARYA JAYA';
+
+  $companyAddress =
+      'Perumahan Bumi Anugrah Sejahtera Blok B4 - No.3, ' .
+      'Rt.009 / Rw.013, Kelurahan Kebalen, ' .
+      'Kec. Babelan - Bekasi, Jawa Barat';
+
+  $companyPhone = '0811-1020-770 - 0856-1539-431';
+
+  $companyEmail = 'officetkj@tanjungkaryajaya.co.id / ' . 'admin@tanjungkaryajaya.co.id';
+
+  /*
+    |--------------------------------------------------------------------------
+    | ITEMS
+    |--------------------------------------------------------------------------
+    */
+
+  $items = $po->items->sortBy('item_no')->values();
+
+  /*
+    |--------------------------------------------------------------------------
+    | TAX / DISCOUNT
+    |
+    | Nilai amount diambil dari database agar historical PO konsisten.
+    |--------------------------------------------------------------------------
+    */
+
+  $subtotal = (float) ($po->subtotal ?? 0);
+
+  $ppnEnabled = (bool) ($po->ppn_enabled ?? false);
+
+  // Yang ditampilkan kepada user/client tetap 12%.
+  $ppnDisplayPercentage = (float) ($po->ppn_percentage ?? 12);
+
+  // Amount yang sudah disimpan secara historis.
+  $ppnAmount = $ppnEnabled ? (float) ($po->ppn_amount ?? 0) : 0;
+
+  $subtotalAfterPpn = $subtotal + $ppnAmount;
+
+  $discountEnabled = (bool) ($po->discount_enabled ?? false);
+
+  $discountPercentage = $discountEnabled ? (float) ($po->discount_percentage ?? 0) : 0;
+
+  $discountAmount = $discountEnabled ? (float) ($po->discount_amount ?? 0) : 0;
+
+  $grandTotal = (float) ($po->grand_total ?? $subtotalAfterPpn - $discountAmount);
+
+  /*
+    |--------------------------------------------------------------------------
+    | FORMATTER
+    |--------------------------------------------------------------------------
+    */
+
+  $money = function ($value): string {
+      return 'Rp ' . number_format((float) $value, 0, ',', '.');
+  };
+
+  $qty = function ($value): string {
+      $number = (float) $value;
+
+      if (floor($number) == $number) {
+          return number_format($number, 0, ',', '.');
+      }
+
+      return number_format($number, 2, ',', '.');
+  };
+
+  /*
+    |--------------------------------------------------------------------------
+    | DATE
+    |--------------------------------------------------------------------------
+    */
+
+  $poDate = $po->po_date ? \Carbon\Carbon::parse($po->po_date)->locale('id')->translatedFormat('d F Y') : '-';
+@endphp
+
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
   <meta charset="UTF-8">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>
-    Purchase Order - {{ $purchaseOrder->po_number }}
+    Purchase Order - {{ $po->po_number }}
   </title>
 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
+    /*
+        |--------------------------------------------------------------------------
+        | PAGE
+        |--------------------------------------------------------------------------
+        */
+
+    @page {
+      size: A4 portrait;
+      margin: 12mm 12mm 15mm 12mm;
+    }
+
+    /*
+        |--------------------------------------------------------------------------
+        | RESET
+        |--------------------------------------------------------------------------
+        */
+
     * {
       box-sizing: border-box;
     }
@@ -22,468 +125,499 @@
       background: #e5e7eb;
       color: #111827;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 11px;
+      font-size: 10pt;
+      line-height: 1.35;
     }
 
-    .toolbar {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-
-      padding: 12px;
-
-      background: #111827;
+    body {
+      padding: 24px 0;
     }
 
-    .toolbar button,
-    .toolbar a {
-      border: 0;
-      border-radius: 6px;
-      padding: 9px 16px;
+    /*
+        |--------------------------------------------------------------------------
+        | DOCUMENT
+        |--------------------------------------------------------------------------
+        */
 
-      font-size: 12px;
-      font-weight: 600;
-
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    .btn-print {
-      background: #2563eb;
-      color: white;
-    }
-
-    .btn-back {
-      background: #374151;
-      color: white;
-    }
-
-    .document-wrapper {
-      padding: 30px 0;
-    }
-
-    .document {
+    .po-document {
       width: 210mm;
       min-height: 297mm;
-
       margin: 0 auto;
-      padding: 15mm 15mm 18mm;
-
-      background: white;
-
-      box-shadow:
-        0 10px 30px rgba(0, 0, 0, 0.12);
+      padding: 12mm;
+      background: #ffffff;
+      box-shadow: 0 3px 20px rgba(0, 0, 0, 0.12);
     }
 
-    /* =========================================================
-           HEADER
-        ========================================================= */
+    /*
+        |--------------------------------------------------------------------------
+        | HEADER
+        |--------------------------------------------------------------------------
+        */
 
-    .header {
+    .company-header {
       display: flex;
-      justify-content: space-between;
       align-items: flex-start;
-
-      padding-bottom: 12px;
-
-      border-bottom: 2px solid #111827;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 10px;
     }
 
-    .company {
+    .company-brand {
       display: flex;
       align-items: flex-start;
       gap: 12px;
+      min-width: 0;
     }
 
     .company-logo {
-      width: 55px;
-      height: 55px;
-
+      width: 58px;
+      height: 58px;
       object-fit: contain;
+      flex: 0 0 58px;
+    }
+
+    .company-info {
+      min-width: 0;
     }
 
     .company-name {
-      margin: 0;
-
-      font-size: 17px;
-      font-weight: 700;
-
-      text-transform: uppercase;
+      margin: 0 0 3px;
+      font-size: 16pt;
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: 0.1px;
     }
 
-    .company-address {
-      margin-top: 4px;
-
-      max-width: 330px;
-
-      font-size: 9px;
-      line-height: 1.5;
-
-      color: #4b5563;
+    .company-address,
+    .company-contact {
+      margin: 0;
+      font-size: 7.5pt;
+      line-height: 1.35;
+      color: #374151;
     }
 
     .document-title {
-      text-align: right;
-    }
-
-    .document-title h1 {
       margin: 0;
-
-      font-size: 20px;
+      text-align: right;
+      font-size: 20pt;
+      line-height: 1;
       font-weight: 800;
-
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
-    .document-title .po-number {
+    .document-subtitle {
       margin-top: 5px;
-
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .document-title .po-date {
-      margin-top: 3px;
-
-      font-size: 10px;
-      color: #4b5563;
-    }
-
-    /* =========================================================
-           INFORMATION
-        ========================================================= */
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-
-      gap: 25px;
-
-      margin-top: 16px;
-      margin-bottom: 18px;
-    }
-
-    .info-block {
-      border: 1px solid #d1d5db;
-    }
-
-    .info-title {
-      padding: 6px 9px;
-
-      background: #f3f4f6;
-
-      border-bottom: 1px solid #d1d5db;
-
-      font-size: 9px;
-      font-weight: 700;
-
-      text-transform: uppercase;
-    }
-
-    .info-body {
-      padding: 8px 9px;
-    }
-
-    .info-row {
-      display: grid;
-      grid-template-columns: 105px 1fr;
-
-      margin-bottom: 4px;
-    }
-
-    .info-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .info-label {
+      text-align: right;
+      font-size: 7.5pt;
       color: #6b7280;
     }
 
-    .info-value {
-      font-weight: 600;
+    /*
+        |--------------------------------------------------------------------------
+        | HEADER LINE
+        |--------------------------------------------------------------------------
+        */
+
+    .header-rule {
+      border: 0;
+      border-top: 2px solid #111827;
+      margin: 8px 0 12px;
     }
 
-    /* =========================================================
-           ITEMS TABLE
-        ========================================================= */
+    /*
+        |--------------------------------------------------------------------------
+        | PO META
+        |--------------------------------------------------------------------------
+        */
+
+    .po-meta {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+
+    .po-meta td {
+      padding: 2px 0;
+      vertical-align: top;
+      font-size: 9pt;
+    }
+
+    .po-meta .label {
+      width: 70px;
+      font-weight: 700;
+    }
+
+    .po-meta .separator {
+      width: 12px;
+      text-align: center;
+    }
+
+    .po-meta .value {
+      font-weight: 500;
+    }
+
+    .po-meta .right-label {
+      width: 65px;
+      padding-left: 20px;
+      font-weight: 700;
+    }
+
+    /*
+        |--------------------------------------------------------------------------
+        | ITEM TABLE
+        |--------------------------------------------------------------------------
+        */
 
     .items-table {
       width: 100%;
-
       border-collapse: collapse;
-
-      margin-top: 8px;
+      table-layout: fixed;
     }
 
     .items-table th,
     .items-table td {
-      border: 1px solid #9ca3af;
+      border: 1px solid #111827;
+    }
 
-      padding: 7px 6px;
-
-      vertical-align: top;
+    .items-table thead {
+      display: table-header-group;
     }
 
     .items-table th {
-      background: #f3f4f6;
-
-      font-size: 9px;
-      font-weight: 700;
-
+      padding: 6px 5px;
       text-align: center;
-      text-transform: uppercase;
+      font-size: 8.5pt;
+      font-weight: 800;
+      background: #f3f4f6;
+      vertical-align: middle;
     }
 
     .items-table td {
-      font-size: 10px;
+      padding: 5px 5px;
+      vertical-align: top;
+      font-size: 8.5pt;
     }
 
+    /*
+        |--------------------------------------------------------------------------
+        | COLUMN WIDTHS
+        |--------------------------------------------------------------------------
+        */
+
     .col-no {
-      width: 30px;
+      width: 8%;
       text-align: center;
     }
 
     .col-description {
-      width: auto;
+      width: 43%;
     }
 
     .col-qty {
-      width: 50px;
+      width: 10%;
       text-align: center;
     }
 
     .col-sat {
-      width: 48px;
+      width: 9%;
       text-align: center;
     }
 
-    .col-price {
-      width: 95px;
+    .col-unit {
+      width: 15%;
       text-align: right;
     }
 
     .col-total {
-      width: 105px;
+      width: 15%;
       text-align: right;
     }
 
+    /*
+        |--------------------------------------------------------------------------
+        | SECTION
+        |--------------------------------------------------------------------------
+        */
+
     .section-row td {
       padding: 6px 7px;
-
       background: #e5e7eb;
-
-      font-weight: 700;
-      font-size: 9px;
-
+      font-weight: 800;
       text-transform: uppercase;
+      font-size: 8.5pt;
+    }
+
+    /*
+        |--------------------------------------------------------------------------
+        | ITEM CONTENT
+        |--------------------------------------------------------------------------
+        */
+
+    .item-description {
+      white-space: pre-line;
+      line-height: 1.4;
     }
 
     .item-notes {
       margin-top: 3px;
-
-      font-size: 8px;
+      color: #4b5563;
+      font-size: 7.5pt;
       font-style: italic;
-
-      color: #6b7280;
+      white-space: pre-line;
     }
 
-    /* =========================================================
-           SUMMARY
-        ========================================================= */
+    .amount {
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    /*
+        |--------------------------------------------------------------------------
+        | SUMMARY
+        |--------------------------------------------------------------------------
+        */
 
     .summary-wrapper {
       display: flex;
       justify-content: flex-end;
-
       margin-top: 12px;
     }
 
-    .summary {
-      width: 285px;
+    .summary-table {
+      width: 48%;
+      border-collapse: collapse;
     }
 
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-
-      padding: 5px 8px;
-
-      border-bottom: 1px solid #e5e7eb;
+    .summary-table td {
+      padding: 4px 6px;
+      font-size: 9pt;
     }
 
-    .summary-label {
-      color: #4b5563;
-    }
-
-    .summary-value {
-      font-weight: 600;
+    .summary-table .summary-label {
       text-align: right;
+      font-weight: 600;
     }
 
-    .summary-total {
-      display: flex;
-      justify-content: space-between;
+    .summary-table .summary-value {
+      width: 42%;
+      text-align: right;
+      white-space: nowrap;
+      font-weight: 600;
+    }
 
-      margin-top: 3px;
-      padding: 9px 8px;
+    .summary-table .subtotal-row td {
+      border-top: 1px solid #111827;
+    }
 
-      background: #111827;
-
-      color: white;
-
-      font-size: 12px;
+    .summary-table .grand-total td {
+      border-top: 2px solid #111827;
+      border-bottom: 2px solid #111827;
+      font-size: 10pt;
       font-weight: 800;
+      padding-top: 6px;
+      padding-bottom: 6px;
     }
 
-    /* =========================================================
-           NOTES
-        ========================================================= */
+    /*
+        |--------------------------------------------------------------------------
+        | NOTES
+        |--------------------------------------------------------------------------
+        */
 
-    .notes {
-      margin-top: 18px;
-
-      border: 1px solid #d1d5db;
+    .notes-section {
+      margin-top: 14px;
     }
 
     .notes-title {
-      padding: 6px 8px;
-
-      background: #f3f4f6;
-
-      border-bottom: 1px solid #d1d5db;
-
-      font-weight: 700;
-      font-size: 9px;
-
-      text-transform: uppercase;
+      margin: 0 0 4px;
+      font-size: 9pt;
+      font-weight: 800;
     }
 
     .notes-content {
-      min-height: 45px;
-
-      padding: 8px;
-
       white-space: pre-line;
-
-      font-size: 9px;
+      font-size: 8.5pt;
       line-height: 1.5;
     }
 
-    /* =========================================================
-           SIGNATURE
-        ========================================================= */
+    /*
+        |--------------------------------------------------------------------------
+        | SIGNATURE
+        |--------------------------------------------------------------------------
+        */
 
-    .signature-wrapper {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-
-      gap: 50px;
-
-      margin-top: 35px;
+    .signature-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 28px;
+      table-layout: fixed;
     }
 
-    .signature {
+    .signature-table td {
+      width: 25%;
+      padding: 0 5px;
       text-align: center;
+      vertical-align: top;
+      font-size: 8pt;
     }
 
     .signature-title {
-      font-size: 9px;
-      font-weight: 600;
-    }
-
-    .signature-space {
-      height: 70px;
-    }
-
-    .signature-name {
-      padding-top: 5px;
-
-      border-top: 1px solid #111827;
-
-      font-size: 10px;
+      min-height: 18px;
       font-weight: 700;
     }
 
-    /* =========================================================
-           FOOTER
-        ========================================================= */
+    .signature-space {
+      height: 48px;
+    }
+
+    .signature-name {
+      font-weight: 700;
+    }
+
+    .signature-date {
+      margin-top: 2px;
+      font-size: 7.5pt;
+    }
+
+    /*
+        |--------------------------------------------------------------------------
+        | FOOTER
+        |--------------------------------------------------------------------------
+        */
 
     .document-footer {
-      margin-top: 20px;
-
+      margin-top: 18px;
       padding-top: 7px;
-
-      border-top: 1px solid #d1d5db;
-
+      border-top: 1px solid #9ca3af;
       text-align: center;
-
-      font-size: 8px;
-      color: #6b7280;
+      color: #4b5563;
+      font-size: 7pt;
+      line-height: 1.4;
     }
 
-    /* =========================================================
-           PRINT
-        ========================================================= */
+    /*
+        |--------------------------------------------------------------------------
+        | PRINT
+        |--------------------------------------------------------------------------
+        */
 
-    @page {
-      size: A4;
-      margin: 0;
+    .print-toolbar {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 1000;
+      display: flex;
+      gap: 8px;
     }
+
+    .print-button {
+      border: 0;
+      border-radius: 6px;
+      padding: 9px 14px;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .print-button:hover {
+      background: #1d4ed8;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 14px;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #111827;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid #d1d5db;
+    }
+
+    /*
+        |--------------------------------------------------------------------------
+        | PRINT MEDIA
+        |--------------------------------------------------------------------------
+        */
 
     @media print {
 
       html,
       body {
-        background: white;
+        background: #ffffff;
       }
 
-      .no-print {
-        display: none !important;
-      }
-
-      .toolbar {
-        display: none !important;
-      }
-
-      .document-wrapper {
+      body {
         padding: 0;
       }
 
-      .document {
-        width: 210mm;
-        min-height: 297mm;
-
+      .po-document {
+        width: auto;
+        min-height: auto;
         margin: 0;
-        padding: 15mm 15mm 18mm;
-
+        padding: 0;
         box-shadow: none;
       }
 
-      thead {
-        display: table-header-group;
+      .print-toolbar {
+        display: none !important;
       }
 
-      tfoot {
-        display: table-footer-group;
-      }
-
-      tr {
-        page-break-inside: avoid;
+      .items-table tr {
         break-inside: avoid;
+        page-break-inside: avoid;
       }
 
-      .signature-wrapper {
-        page-break-inside: avoid;
-        break-inside: avoid;
+      .section-row {
+        break-after: avoid;
+        page-break-after: avoid;
       }
 
-      .notes {
-        page-break-inside: avoid;
+      .summary-wrapper,
+      .notes-section,
+      .signature-table {
         break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+    }
+
+    /*
+        |--------------------------------------------------------------------------
+        | SCREEN RESPONSIVE
+        |--------------------------------------------------------------------------
+        */
+
+    @media screen and (max-width: 900px) {
+      body {
+        padding: 0;
+      }
+
+      .po-document {
+        width: 100%;
+        min-height: auto;
+        padding: 24px;
+      }
+
+      .company-header {
+        flex-direction: column;
+      }
+
+      .document-title,
+      .document-subtitle {
+        text-align: left;
+      }
+
+      .summary-table {
+        width: 100%;
       }
     }
   </style>
@@ -491,376 +625,376 @@
 
 <body>
 
-  {{-- =========================================================
-         TOOLBAR
-    ========================================================== --}}
-
-  <div class="toolbar no-print">
-
-    <a href="{{ url()->previous() }}" class="btn-back">
+  {{-- TOOLBAR --}}
+  <div class="print-toolbar">
+    <a href="{{ url()->previous() }}" class="back-button">
       ← Kembali
     </a>
 
-    <button type="button" class="btn-print" onclick="window.print()">
-      Save as PDF / Print
+    <button type="button" class="print-button" onclick="window.print()">
+      Print / Save PDF
     </button>
-
   </div>
 
+  <main class="po-document">
 
-  {{-- =========================================================
-         DOCUMENT
-    ========================================================== --}}
+    {{-- =========================================================
+            COMPANY HEADER
+        ========================================================== --}}
+    <header class="company-header">
 
-  <div class="document-wrapper">
+      <div class="company-brand">
 
-    <main class="document">
+        <img src="{{ asset('images/logo-tkj.png') }}" alt="Logo {{ $companyName }}" class="company-logo">
 
-      {{-- HEADER --}}
-      <header class="header">
+        <div class="company-info">
 
-        <div class="company">
+          <h1 class="company-name">
+            {{ $companyName }}
+          </h1>
 
-          {{-- Ganti path logo sesuai logo perusahaan --}}
-          @if (file_exists(public_path('images/logo.png')))
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="company-logo">
-          @endif
+          <p class="company-address">
+            {{ $companyAddress }}
+          </p>
 
-          <div>
-            <h2 class="company-name">
-              {{ config('app.name') }}
-            </h2>
+          <p class="company-contact">
+            Telp : {{ $companyPhone }}
+          </p>
 
-            <div class="company-address">
-              Alamat perusahaan<br>
-              Telepon / Email / Website
-            </div>
-          </div>
+          <p class="company-contact">
+            Email : {{ $companyEmail }}
+          </p>
 
-        </div>
-
-        <div class="document-title">
-
-          <h1>PURCHASE ORDER</h1>
-
-          <div class="po-number">
-            {{ $purchaseOrder->po_number }}
-          </div>
-
-          <div class="po-date">
-            {{ $purchaseOrder->po_date?->format('d F Y') ?? '-' }}
-          </div>
-
-        </div>
-
-      </header>
-
-
-      {{-- INFORMATION --}}
-      <section class="info-grid">
-
-        <div class="info-block">
-
-          <div class="info-title">
-            Supplier / Customer
-          </div>
-
-          <div class="info-body">
-
-            <div class="info-row">
-              <span class="info-label">
-                Customer
-              </span>
-
-              <span class="info-value">
-                {{ $purchaseOrder->customer ?: '-' }}
-              </span>
-            </div>
-
-            <div class="info-row">
-              <span class="info-label">
-                Lokasi
-              </span>
-
-              <span class="info-value">
-                {{ $purchaseOrder->location ?: '-' }}
-              </span>
-            </div>
-
-            <div class="info-row">
-              <span class="info-label">
-                PIC
-              </span>
-
-              <span class="info-value">
-                {{ $purchaseOrder->pic ?: '-' }}
-              </span>
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="info-block">
-
-          <div class="info-title">
-            Referensi
-          </div>
-
-          <div class="info-body">
-
-            <div class="info-row">
-              <span class="info-label">
-                Project
-              </span>
-
-              <span class="info-value">
-                {{ $purchaseOrder->project?->id ?? '-' }}
-              </span>
-            </div>
-
-            <div class="info-row">
-              <span class="info-label">
-                Nama Project
-              </span>
-
-              <span class="info-value">
-                {{ $purchaseOrder->project?->nama_project ?? '-' }}
-              </span>
-            </div>
-
-            <div class="info-row">
-              <span class="info-label">
-                Quotation
-              </span>
-
-              <span class="info-value">
-                {{ $purchaseOrder->quotation_no ?: '-' }}
-              </span>
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {{-- ITEMS --}}
-      @php
-        $subtotal = (float) ($purchaseOrder->subtotal ?? 0);
-
-        $ppnEnabled = (bool) ($purchaseOrder->ppn_enabled ?? false);
-
-        $ppnAmount = $ppnEnabled ? (float) ($purchaseOrder->ppn_amount ?? round($subtotal * 0.11)) : 0;
-
-        $totalAfterPpn = $subtotal + $ppnAmount;
-
-        $discountEnabled = (bool) ($purchaseOrder->discount_enabled ?? false);
-
-        $discountPercent = (float) ($purchaseOrder->discount_percent ?? 0);
-
-        $discountAmount = $discountEnabled
-            ? (float) ($purchaseOrder->discount_amount ?? round($totalAfterPpn * ($discountPercent / 100)))
-            : 0;
-
-        $finalTotal = max(0, $totalAfterPpn - $discountAmount);
-      @endphp
-
-
-      <table class="items-table">
-
-        <thead>
-
-          <tr>
-            <th class="col-no">No.</th>
-            <th class="col-description">Description</th>
-            <th class="col-qty">Qty</th>
-            <th class="col-sat">SAT</th>
-            <th class="col-price">Unit Price</th>
-            <th class="col-total">Amount</th>
-          </tr>
-
-        </thead>
-
-        <tbody>
-
-          @php
-            $currentSection = null;
-            $displayNumber = 0;
-          @endphp
-
-          @forelse ($purchaseOrder->items as $item)
-
-            @if ($item->section !== $currentSection)
-              @php
-                $currentSection = $item->section;
-              @endphp
-
-              @if ($currentSection)
-                <tr class="section-row">
-                  <td colspan="6">
-                    {{ $currentSection }}
-                  </td>
-                </tr>
-              @endif
-            @endif
-
-            @php
-              $displayNumber++;
-            @endphp
-
-            <tr>
-
-              <td class="col-no">
-                {{ $displayNumber }}
-              </td>
-
-              <td class="col-description">
-
-                <strong>
-                  {{ $item->description }}
-                </strong>
-
-                @if ($item->notes)
-                  <div class="item-notes">
-                    {{ $item->notes }}
-                  </div>
-                @endif
-
-              </td>
-
-              <td class="col-qty">
-                {{ rtrim(rtrim(number_format((float) $item->quantity, 2, ',', '.'), '0'), ',') }}
-              </td>
-
-              <td class="col-sat">
-                {{ $item->sat ?: '-' }}
-              </td>
-
-              <td class="col-price">
-                Rp {{ number_format((float) $item->unit_price, 0, ',', '.') }}
-              </td>
-
-              <td class="col-total">
-                Rp {{ number_format((float) $item->total_price, 0, ',', '.') }}
-              </td>
-
-            </tr>
-
-          @empty
-
-            <tr>
-              <td colspan="6" style="text-align:center;">
-                Belum ada item Purchase Order.
-              </td>
-            </tr>
-
-          @endforelse
-
-        </tbody>
-
-      </table>
-
-
-      {{-- SUMMARY --}}
-      <div class="summary-wrapper">
-
-        <div class="summary">
-
-          <div class="summary-row">
-            <span class="summary-label">
-              Subtotal
-            </span>
-
-            <span class="summary-value">
-              Rp {{ number_format($subtotal, 0, ',', '.') }}
-            </span>
-          </div>
-
-
-          @if ($ppnEnabled)
-            <div class="summary-row">
-
-              <span class="summary-label">
-                PPN 12%
-              </span>
-
-              <span class="summary-value">
-                Rp {{ number_format($ppnAmount, 0, ',', '.') }}
-              </span>
-
-            </div>
-          @endif
-
-
-          <div class="summary-row">
-
-            <span class="summary-label">
-              Total Setelah PPN
-            </span>
-
-            <span class="summary-value">
-              Rp {{ number_format($totalAfterPpn, 0, ',', '.') }}
-            </span>
-
-          </div>
-
-
-          @if ($discountEnabled)
-            <div class="summary-row">
-
-              <span class="summary-label">
-                Diskon {{ number_format($discountPercent, 2, ',', '.') }}%
-              </span>
-
-              <span class="summary-value">
-                − Rp {{ number_format($discountAmount, 0, ',', '.') }}
-              </span>
-
-            </div>
-          @endif
-
-
-          <div class="summary-total">
-
-            <span>
-              TOTAL AKHIR
-            </span>
-
-            <span>
-              Rp {{ number_format($finalTotal, 0, ',', '.') }}
-            </span>
-
-          </div>
+          <p class="company-contact">
+            Website : tanjungkaryajaya.co.id
+          </p>
 
         </div>
 
       </div>
 
+      <div>
+        <h2 class="document-title">
+          PURCHASE ORDER
+        </h2>
 
-      {{-- NOTES --}}
-      @if ($purchaseOrder->notes)
-        <section class="notes">
+        <p class="document-subtitle">
+          PT. TANJUNG KARYA JAYA
+        </p>
+      </div>
 
-          <div class="notes-title">
-            Notes
-          </div>
+    </header>
 
-          <div class="notes-content">
-            {{ $purchaseOrder->notes }}
-          </div>
+    <hr class="header-rule">
 
-        </section>
-      @endif
+    {{-- =========================================================
+            PO INFORMATION
+        ========================================================== --}}
+    <table class="po-meta">
+      <tr>
+        <td class="label">
+          Vendor
+        </td>
 
+        <td class="separator">
+          :
+        </td>
 
-      {{-- SIGNATURE --}}
-      <section class="signature-wrapper">
+        <td class="value">
+          {{ $po->customer ?: '-' }}
+        </td>
 
-        <div class="signature">
+        <td class="right-label">
+          PO Number
+        </td>
 
+        <td class="separator">
+          :
+        </td>
+
+        <td class="value">
+          {{ $po->po_number ?: '-' }}
+        </td>
+      </tr>
+
+      <tr>
+        <td class="label">
+          Project
+        </td>
+
+        <td class="separator">
+          :
+        </td>
+
+        <td class="value">
+          {{ $po->project?->nama_project ?? ($po->project_id ?? '-') }}
+        </td>
+
+        <td class="right-label">
+          Date
+        </td>
+
+        <td class="separator">
+          :
+        </td>
+
+        <td class="value">
+          {{ $poDate }}
+        </td>
+      </tr>
+
+      <tr>
+        <td class="label">
+          Location
+        </td>
+
+        <td class="separator">
+          :
+        </td>
+
+        <td class="value">
+          {{ $po->location ?: '-' }}
+        </td>
+
+        <td class="right-label">
+          Quotation
+        </td>
+
+        <td class="separator">
+          :
+        </td>
+
+        <td class="value">
+          {{ $po->quotation_no ?: '-' }}
+        </td>
+      </tr>
+
+      <tr>
+        <td class="label">
+          PIC
+        </td>
+
+        <td class="separator">
+          :
+        </td>
+
+        <td class="value">
+          {{ $po->pic ?: '-' }}
+        </td>
+
+        <td class="right-label">
+          Status
+        </td>
+
+        <td class="separator">
+          :
+        </td>
+
+        <td class="value">
+          {{ strtoupper($po->status ?? 'DRAFT') }}
+        </td>
+      </tr>
+    </table>
+
+    {{-- =========================================================
+            ITEM TABLE
+        ========================================================== --}}
+    <table class="items-table">
+
+      <thead>
+        <tr>
+          <th class="col-no">
+            No.
+          </th>
+
+          <th class="col-description">
+            Description
+          </th>
+
+          <th class="col-qty">
+            Qty
+          </th>
+
+          <th class="col-sat">
+            SAT
+          </th>
+
+          <th class="col-unit">
+            Unit Price (Rp)
+          </th>
+
+          <th class="col-total">
+            Amount (Rp)
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        @php
+          $displayNo = 0;
+          $currentSection = null;
+        @endphp
+
+        @forelse ($items as $item)
+          {{-- SECTION HEADER --}}
+          @if (filled($item->section) && $item->section !== $currentSection)
+            @php
+              $currentSection = $item->section;
+            @endphp
+
+            <tr class="section-row">
+              <td colspan="6">
+                {{ $item->section }}
+              </td>
+            </tr>
+          @endif
+
+          @php
+            $displayNo++;
+          @endphp
+
+          <tr>
+
+            <td class="col-no">
+              {{ $displayNo }}
+            </td>
+
+            <td class="col-description">
+
+              <div class="item-description">
+                {{ $item->description }}
+              </div>
+
+              @if (filled($item->notes))
+                <div class="item-notes">
+                  {{ $item->notes }}
+                </div>
+              @endif
+
+            </td>
+
+            <td class="col-qty">
+              {{ $qty($item->quantity) }}
+            </td>
+
+            <td class="col-sat">
+              {{ $item->sat ?: '-' }}
+            </td>
+
+            <td class="amount">
+              {{ number_format((float) $item->unit_price, 0, ',', '.') }}
+            </td>
+
+            <td class="amount">
+              {{ number_format((float) $item->total_price, 0, ',', '.') }}
+            </td>
+
+          </tr>
+
+        @empty
+
+          <tr>
+            <td colspan="6" style="text-align:center; padding:20px;">
+              Belum ada item Purchase Order.
+            </td>
+          </tr>
+        @endforelse
+
+      </tbody>
+
+    </table>
+
+    {{-- =========================================================
+            SUMMARY
+        ========================================================== --}}
+    <div class="summary-wrapper">
+
+      <table class="summary-table">
+
+        <tr class="subtotal-row">
+          <td class="summary-label">
+            SUBTOTAL
+          </td>
+
+          <td class="summary-value">
+            {{ $money($subtotal) }}
+          </td>
+        </tr>
+
+        @if ($ppnEnabled)
+          <tr>
+            <td class="summary-label">
+              PPN {{ rtrim(rtrim(number_format($ppnDisplayPercentage, 2, ',', '.'), '0'), ',') }}%
+            </td>
+
+            <td class="summary-value">
+              {{ $money($ppnAmount) }}
+            </td>
+          </tr>
+
+          <tr>
+            <td class="summary-label">
+              SUBTOTAL + PPN
+            </td>
+
+            <td class="summary-value">
+              {{ $money($subtotalAfterPpn) }}
+            </td>
+          </tr>
+        @endif
+
+        @if ($discountEnabled)
+          <tr>
+            <td class="summary-label">
+              DISKON {{ rtrim(rtrim(number_format($discountPercentage, 2, ',', '.'), '0'), ',') }}%
+            </td>
+
+            <td class="summary-value">
+              - {{ $money($discountAmount) }}
+            </td>
+          </tr>
+        @endif
+
+        <tr class="grand-total">
+          <td class="summary-label">
+            GRAND TOTAL
+          </td>
+
+          <td class="summary-value">
+            {{ $money($grandTotal) }}
+          </td>
+        </tr>
+
+      </table>
+
+    </div>
+
+    {{-- =========================================================
+            GLOBAL NOTES
+        ========================================================== --}}
+    @if (filled($po->notes))
+      <section class="notes-section">
+
+        <h3 class="notes-title">
+          Notes :
+        </h3>
+
+        <div class="notes-content">
+          {{ $po->notes }}
+        </div>
+
+      </section>
+    @endif
+
+    {{-- =========================================================
+            SIGNATURE
+        ========================================================== --}}
+    <table class="signature-table">
+
+      <tr>
+
+        <td>
           <div class="signature-title">
             Prepared By
           </div>
@@ -868,14 +1002,31 @@
           <div class="signature-space"></div>
 
           <div class="signature-name">
-            {{ $purchaseOrder->pic ?: '________________________' }}
+            ______________________
           </div>
 
-        </div>
+          <div class="signature-date">
+            Date : {{ $poDate }}
+          </div>
+        </td>
 
+        <td>
+          <div class="signature-title">
+            Reviewed By
+          </div>
 
-        <div class="signature">
+          <div class="signature-space"></div>
 
+          <div class="signature-name">
+            ______________________
+          </div>
+
+          <div class="signature-date">
+            Date : {{ $poDate }}
+          </div>
+        </td>
+
+        <td>
           <div class="signature-title">
             Approved By
           </div>
@@ -883,25 +1034,50 @@
           <div class="signature-space"></div>
 
           <div class="signature-name">
-            ________________________
+            ______________________
           </div>
 
-        </div>
+          <div class="signature-date">
+            Date : {{ $poDate }}
+          </div>
+        </td>
 
-      </section>
+        <td>
+          <div class="signature-title">
+            Subcontractor / Vendor
+          </div>
 
+          <div class="signature-space"></div>
 
-      {{-- FOOTER --}}
-      <footer class="document-footer">
+          <div class="signature-name">
+            ______________________
+          </div>
 
-        Purchase Order —
-        {{ $purchaseOrder->po_number }}
+          <div class="signature-date">
+            Date : {{ $poDate }}
+          </div>
+        </td>
 
-      </footer>
+      </tr>
 
-    </main>
+    </table>
 
-  </div>
+    {{-- =========================================================
+            FOOTER
+        ========================================================== --}}
+    <footer class="document-footer">
+
+      <strong>{{ $companyName }}</strong><br>
+
+      {{ $companyAddress }}<br>
+
+      Telp : {{ $companyPhone }}
+      &nbsp; | &nbsp;
+      Email : {{ $companyEmail }}
+
+    </footer>
+
+  </main>
 
 </body>
 

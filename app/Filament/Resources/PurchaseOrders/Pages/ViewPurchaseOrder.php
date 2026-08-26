@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PurchaseOrders\Pages;
 
 use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
+use App\Models\PurchaseOrder;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
@@ -14,21 +15,22 @@ class ViewPurchaseOrder extends ViewRecord
   protected function getHeaderActions(): array
   {
     return [
+
       Action::make('document')
-        ->label('Document PO')
+        ->label('Dokumen PO')
         ->icon('heroicon-o-document-text')
         ->color('success')
         ->url(
-          fn() => route(
+          fn(PurchaseOrder $record): string =>
+          route(
             'purchase-orders.document',
-            [
-              'purchaseOrder' => $this->record,
-            ]
+            $record
           )
         )
         ->openUrlInNewTab(),
 
       EditAction::make(),
+
     ];
   }
 }
