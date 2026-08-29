@@ -49,7 +49,7 @@
 
   $discountEnabled = (bool) ($po->discount_enabled ?? false);
 
-  $discountPercentage = $discountEnabled ? (float) ($po->discount_percentage ?? 0) : 0;
+  $discountPercentage = $discountEnabled ? (float) ($po->discount_percent ?? 0) : 0;
 
   $discountAmount = $discountEnabled ? (float) ($po->discount_amount ?? 0) : 0;
 
@@ -105,7 +105,7 @@
 
     @page {
       size: A4 portrait;
-      margin: 12mm 12mm 15mm 12mm;
+      margin: 12mm 12mm 0mm 12mm;
     }
 
     /*
@@ -170,10 +170,10 @@
     }
 
     .company-logo {
-      width: 58px;
-      height: 58px;
+      width: 70px;
+      height: 70px;
       object-fit: contain;
-      flex: 0 0 58px;
+      flex: 0 0 70px;
     }
 
     .company-info {
@@ -257,7 +257,7 @@
     }
 
     .po-meta .right-label {
-      width: 65px;
+      width: 110px;
       padding-left: 20px;
       font-weight: 700;
     }
@@ -416,6 +416,10 @@
       font-weight: 800;
       padding-top: 6px;
       padding-bottom: 6px;
+    }
+
+    .summary-dpp {
+      height: 25px;
     }
 
     /*
@@ -782,17 +786,6 @@
           {{ $po->pic ?: '-' }}
         </td>
 
-        <td class="right-label">
-          Status
-        </td>
-
-        <td class="separator">
-          :
-        </td>
-
-        <td class="value">
-          {{ strtoupper($po->status ?? 'DRAFT') }}
-        </td>
       </tr>
     </table>
 
@@ -956,6 +949,13 @@
           </tr>
         @endif
 
+        {{-- DPP if necessary --}}
+        <tr class="summary-dpp">
+          <td class="summary-label"></td>
+          
+          <td class="summary-value"></td>
+        </tr>
+
         <tr class="grand-total">
           <td class="summary-label">
             GRAND TOTAL
@@ -965,6 +965,8 @@
             {{ $money($grandTotal) }}
           </td>
         </tr>
+
+        
 
       </table>
 
