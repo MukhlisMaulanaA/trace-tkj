@@ -146,6 +146,14 @@ class PurchaseOrder extends Model
     )->orderBy('item_no');
   }
 
+  public function progresses(): HasMany
+  {
+    return $this->hasMany(
+      PurchaseOrderProgress::class,
+      'purchase_order_id'
+    )->orderBy('invoice_date');
+  }
+
   /*
   |--------------------------------------------------------------------------
   | TOTAL CALCULATION
