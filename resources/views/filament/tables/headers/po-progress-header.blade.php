@@ -1,6 +1,6 @@
 @php
   $purchaseOrder = $purchaseOrder;
-  
+
   $lastProgress = $purchaseOrder
       ->progresses()
       ->where('is_system', false)
@@ -8,15 +8,11 @@
       ->orderByDesc('id')
       ->first();
 
-  $totalPaid = (float) $purchaseOrder
-      ->progresses()
-      ->sum('amount');
+  $totalPaid = (float) $purchaseOrder->progresses()->sum('amount');
 
   $grandTotal = (float) ($purchaseOrder->grand_total ?? 0);
 
-  $currentProgress = $grandTotal > 0
-      ? max(0, min(100, round(($totalPaid / $grandTotal) * 100, 2)))
-      : 0;
+  $currentProgress = $grandTotal > 0 ? max(0, min(100, round(($totalPaid / $grandTotal) * 100, 2))) : 0;
 
   $status = match (true) {
       $currentProgress >= 100 => 'Selesai dibayar',
@@ -71,15 +67,15 @@
               'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
           
               'bg-gray-100 text-gray-600 ring-gray-500/20
-                                                           dark:bg-white/5 dark:text-gray-300 dark:ring-white/10' =>
+                                                                               dark:bg-white/5 dark:text-gray-300 dark:ring-white/10' =>
                   $currentProgress === 0,
           
               'bg-primary-50 text-primary-700 ring-primary-600/20
-                                                           dark:bg-primary-500/10 dark:text-primary-300 dark:ring-primary-400/30' =>
+                                                                               dark:bg-primary-500/10 dark:text-primary-300 dark:ring-primary-400/30' =>
                   $currentProgress > 0 && $currentProgress < 100,
           
               'bg-success-50 text-success-700 ring-success-600/20
-                                                           dark:bg-success-500/10 dark:text-success-300 dark:ring-success-400/30' =>
+                                                                               dark:bg-success-500/10 dark:text-success-300 dark:ring-success-400/30' =>
                   $currentProgress >= 100,
           ])>
             {{ $status }}
@@ -109,18 +105,24 @@
       {{-- Bar --}}
       <div class="relative">
 
-        <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-white/10">
+        {{-- Track --}}
+        <div class="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-white/10">
 
-          <div
-            class="h-full transition-all duration-500 ease-out"
-            @class([
-                'bg-gray-300 dark:bg-gray-600' => $currentProgress === 0,
-                'bg-primary-600 dark:bg-primary-500' => $currentProgress > 0 && $currentProgress < 100,
-                'bg-success-600 dark:bg-success-500' => $currentProgress >= 100,
-            ])
-            style="width: {{ $currentProgress }}%"></div>
+          {{-- Filled Progress --}}
+          <div class="h-full rounded-full bg-primary-600 transition-all duration-500 ease-out"
+            style="width: {{ $currentProgress }}%;"></div>
 
         </div>
+
+        {{-- Percentage Marker --}}
+        @if ($currentProgress > 0 && $currentProgress < 100)
+          <div class="absolute top-0 -translate-x-1/2 -translate-y-1/2 transition-[left] duration-700 ease-out"
+            style="left: {{ number_format($currentProgress, 2, '.', '') }}%;">
+            <div
+              class="h-4 w-4 rounded-full border-2 border-white bg-primary-600 shadow-sm dark:border-gray-900 dark:bg-primary-500">
+            </div>
+          </div>
+        @endif
 
       </div>
 

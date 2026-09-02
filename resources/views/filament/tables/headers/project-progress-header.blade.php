@@ -61,15 +61,15 @@
               'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
           
               'bg-gray-100 text-gray-600 ring-gray-500/20
-                                                           dark:bg-white/5 dark:text-gray-300 dark:ring-white/10' =>
+                                                                     dark:bg-white/5 dark:text-gray-300 dark:ring-white/10' =>
                   $currentProgress === 0,
           
               'bg-primary-50 text-primary-700 ring-primary-600/20
-                                                           dark:bg-primary-500/10 dark:text-primary-300 dark:ring-primary-400/30' =>
+                                                                     dark:bg-primary-500/10 dark:text-primary-300 dark:ring-primary-400/30' =>
                   $currentProgress > 0 && $currentProgress < 100,
           
               'bg-success-50 text-success-700 ring-success-600/20
-                                                           dark:bg-success-500/10 dark:text-success-300 dark:ring-success-400/30' =>
+                                                                     dark:bg-success-500/10 dark:text-success-300 dark:ring-success-400/30' =>
                   $currentProgress >= 100,
           ])>
             {{ $status }}
