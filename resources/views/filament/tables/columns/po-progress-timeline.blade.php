@@ -84,17 +84,30 @@
       {{-- PDF indicator --}}
       @if (filled($record->pdf_file))
         <div class="mt-3">
-          <a
-            href="{{ Storage::disk('public')->url($record->pdf_file) }}"
-            target="_blank"
-            class="inline-flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:bg-white/[0.03] dark:text-gray-400 dark:hover:bg-white/[0.06]">
-            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fill-rule="evenodd"
-                d="M8 4a2 2 0 012-2h5.293a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V15a3 3 0 01-3 3H5a3 3 0 01-3-3V7a3 3 0 013-3h3zm5 1a1 1 0 100-2 1 1 0 000 2z"
-                clip-rule="evenodd" />
+          <a href="{{ Storage::disk('public')->url($record->pdf_file) }}" target="_blank" rel="noopener noreferrer"
+            x-on:click.stop
+            class="inline-flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-100 dark:bg-white/[0.03] dark:text-gray-400 dark:hover:bg-white/[0.06]">
+            {{-- PDF Icon --}}
+            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M7 3.5h6.5L19 9v11.5A1.5 1.5 0 0117.5 22h-10A1.5 1.5 0 016 20.5v-15A2 2 0 018 3.5z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 3.5V9h5.5" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 15h1.5a1.5 1.5 0 000-3H9v5m6-5h-1v5h1a2.5 2.5 0 000-5z" />
             </svg>
-            {{ basename($record->pdf_file) }}
+
+            <span>
+              Lihat Invoice
+            </span>
+
+            {{-- New Tab Icon --}}
+            <svg class="h-3.5 w-3.5 opacity-60" fill="none" stroke="currentColor" stroke-width="1.8"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5h5v5" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 5l-8 8" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M19 13v5.5A1.5 1.5 0 0117.5 20h-11A1.5 1.5 0 015 18.5v-11A1.5 1.5 0 016.5 6H12" />
+            </svg>
           </a>
         </div>
       @endif
