@@ -678,7 +678,7 @@
       </div>
 
       <div>
-        <h2 class="document-title">
+        <h2 class="document-title" contenteditable="true">
           PURCHASE ORDER
         </h2>
 
@@ -704,7 +704,7 @@
           :
         </td>
 
-        <td class="value">
+        <td class="value" contenteditable="true">
           {{ $po->customer ?: '-' }}
         </td>
 
