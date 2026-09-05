@@ -11,6 +11,13 @@ class PurchaseOrder extends Model
 {
   use HasFactory;
 
+  /**
+   * Faktor Dasar Pengenaan Pajak (DPP).
+   *
+   * Nilai ini baku dan tidak dapat diubah melalui form.
+   */
+  protected const DPP_FACTOR = 0.916666666666667;
+
   /*
   |--------------------------------------------------------------------------
   | MODEL EVENTS
@@ -29,19 +36,8 @@ class PurchaseOrder extends Model
       }
     });
 
-    static::saving(function (PurchaseOrder $purchaseOrder) {
-      $purchaseOrder->recalculateTotals();
-    });
-
     static::saved(function (PurchaseOrder $purchaseOrder) {
-      if (
-        $purchaseOrder->wasChanged([
-          'subtotal',
-          'ppn_enabled',
-        ])
-      ) {
-        $purchaseOrder->calculateTotals();
-      }
+      $purchaseOrder->calculateTotals();
     });
   }
 
@@ -94,13 +90,19 @@ class PurchaseOrder extends Model
     'pdf_file',
     'status',
     'notes',
+
     'subtotal',
-    'ppn_enabled',
-    'ppn_amount',
-    'grand_total',
+
     'discount_enabled',
     'discount_percent',
     'discount_amount',
+
+    'dpp_enabled',
+    'dpp_amount',
+
+    'ppn_enabled',
+    'ppn_amount',
+
     'grand_total',
   ];
 
@@ -114,13 +116,20 @@ class PurchaseOrder extends Model
   {
     return [
       'po_date' => 'date',
+
       'subtotal' => 'decimal:0',
-      'ppn_enabled' => 'boolean',
-      'ppn_amount' => 'decimal:0',
+
       'discount_enabled' => 'boolean',
       'discount_percent' => 'decimal:2',
-      'discount_amount' => 'decimal:2',
-      'grand_total' => 'decimal:2',
+      'discount_amount' => 'decimal:0',
+
+      'dpp_enabled' => 'boolean',
+      'dpp_amount' => 'decimal:0',
+
+      'ppn_enabled' => 'boolean',
+      'ppn_amount' => 'decimal:0',
+
+      'grand_total' => 'decimal:0',
     ];
   }
 
@@ -155,35 +164,35 @@ class PurchaseOrder extends Model
     )->orderBy('invoice_date');
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | TOTAL CALCULATION
-  |--------------------------------------------------------------------------
-  */
+  // /*
+  // |--------------------------------------------------------------------------
+  // | TOTAL CALCULATION
+  // |--------------------------------------------------------------------------
+  // */
 
-  public function calculateTotals(): void
-  {
-    $subtotal = $this->items()->sum('total_price');
+  // public function calculateTotals(): void
+  // {
+  //   $subtotal = $this->items()->sum('total_price');
 
-    /*
-     * Client requirement:
-     *
-     * Display : PPN 12%
-     * Calculate: 11%
-     */
+  //   /*
+  //    * Client requirement:
+  //    *
+  //    * Display : PPN 12%
+  //    * Calculate: 11%
+  //    */
 
-    $ppnAmount = $this->ppn_enabled
-      ? round($subtotal * 0.11)
-      : 0;
+  //   $ppnAmount = $this->ppn_enabled
+  //     ? round($subtotal * 0.11)
+  //     : 0;
 
-    $grandTotal = $subtotal + $ppnAmount;
+  //   $grandTotal = $subtotal + $ppnAmount;
 
-    $this->forceFill([
-      'subtotal' => $subtotal,
-      'ppn_amount' => $ppnAmount,
-      'grand_total' => $grandTotal,
-    ])->saveQuietly();
-  }
+  //   $this->forceFill([
+  //     'subtotal' => $subtotal,
+  //     'ppn_amount' => $ppnAmount,
+  //     'grand_total' => $grandTotal,
+  //   ])->saveQuietly();
+  // }
 
   /*
   |--------------------------------------------------------------------------
@@ -201,37 +210,85 @@ class PurchaseOrder extends Model
     return $this->status === 'submitted';
   }
 
-  public function recalculateTotals(): void
+  // public function recalculateTotals(): void
+  // {
+  //   $subtotal = (float) ($this->subtotal ?? 0);
+
+  //   /*
+  //   |--------------------------------------------------------------------------
+  //   | PPN
+  //   |--------------------------------------------------------------------------
+  //   | Display : 12%
+  //   | Actual  : 11%
+  //   |--------------------------------------------------------------------------
+  //   */
+
+  //   $ppnAmount = 0;
+
+  //   if ($this->ppn_enabled) {
+  //     $ppnAmount = round($subtotal * 0.11);
+  //   }
+
+  //   /*
+  //   |--------------------------------------------------------------------------
+  //   | TOTAL SETELAH PPN
+  //   |--------------------------------------------------------------------------
+  //   */
+
+  //   $totalAfterPpn = $subtotal + $ppnAmount;
+
+  //   /*
+  //   |--------------------------------------------------------------------------
+  //   | DISCOUNT
+  //   |--------------------------------------------------------------------------
+  //   */
+
+  //   $discountAmount = 0;
+
+  //   if ($this->discount_enabled) {
+  //     $discountPercent = max(
+  //       0,
+  //       min(100, (float) ($this->discount_percent ?? 0))
+  //     );
+
+  //     $discountAmount = round(
+  //       $totalAfterPpn * ($discountPercent / 100)
+  //     );
+  //   }
+
+  //   /*
+  //   |--------------------------------------------------------------------------
+  //   | GRAND TOTAL
+  //   |--------------------------------------------------------------------------
+  //   */
+
+  //   $grandTotal = max(
+  //     0,
+  //     $totalAfterPpn - $discountAmount
+  //   );
+
+  //   $this->ppn_amount = $ppnAmount;
+  //   $this->discount_amount = $discountAmount;
+  //   $this->grand_total = $grandTotal;
+  // }
+
+  public function calculateTotals(): void
   {
-    $subtotal = (float) ($this->subtotal ?? 0);
-
     /*
     |--------------------------------------------------------------------------
-    | PPN
+    | 1. SUBTOTAL
     |--------------------------------------------------------------------------
-    | Display : 12%
-    | Actual  : 11%
-    |--------------------------------------------------------------------------
+    | Total seluruh item Purchase Order.
     */
 
-    $ppnAmount = 0;
+    $subtotal = (float) $this->items()->sum('total_price');
 
-    if ($this->ppn_enabled) {
-      $ppnAmount = round($subtotal * 0.11);
-    }
 
     /*
     |--------------------------------------------------------------------------
-    | TOTAL SETELAH PPN
+    | 2. DISCOUNT
     |--------------------------------------------------------------------------
-    */
-
-    $totalAfterPpn = $subtotal + $ppnAmount;
-
-    /*
-    |--------------------------------------------------------------------------
-    | DISCOUNT
-    |--------------------------------------------------------------------------
+    | Diskon dihitung dari subtotal.
     */
 
     $discountAmount = 0;
@@ -243,23 +300,104 @@ class PurchaseOrder extends Model
       );
 
       $discountAmount = round(
-        $totalAfterPpn * ($discountPercent / 100)
+        $subtotal * ($discountPercent / 100)
       );
     }
 
+
     /*
     |--------------------------------------------------------------------------
-    | GRAND TOTAL
+    | 3. SUBTOTAL SETELAH DISKON
     |--------------------------------------------------------------------------
+    */
+
+    $subtotalAfterDiscount = max(
+      0,
+      $subtotal - $discountAmount
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 4. DPP
+    |--------------------------------------------------------------------------
+    | Jika DPP ON:
+    |
+    | Hasil DPP =
+    | Subtotal setelah diskon × 0.916666666666667
+    |
+    */
+
+    $dppAmount = 0;
+
+    if ($this->dpp_enabled) {
+      $dppAmount = round(
+        $subtotalAfterDiscount * self::DPP_FACTOR
+      );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 5. PPN
+    |--------------------------------------------------------------------------
+    |
+    | DPP ON
+    | → PPN 12% dari Hasil DPP
+    |
+    | DPP OFF
+    | → PPN 11% dari Subtotal setelah diskon
+    |
+    */
+
+    $ppnAmount = 0;
+
+    if ($this->ppn_enabled) {
+      if ($this->dpp_enabled) {
+        $ppnAmount = round(
+          $dppAmount * 0.12
+        );
+      } else {
+        $ppnAmount = round(
+          $subtotalAfterDiscount * 0.11
+        );
+      }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 6. GRAND TOTAL
+    |--------------------------------------------------------------------------
+    |
+    | Requirement:
+    |
+    | Grand Total = Subtotal + Nilai Pajak
+    |
+    | Catatan:
+    | Diskon TIDAK dikurangi lagi dari Grand Total.
+    | Diskon hanya memengaruhi dasar pengenaan pajak.
+    |
     */
 
     $grandTotal = max(
       0,
-      $totalAfterPpn - $discountAmount
+      round($subtotal + $ppnAmount)
     );
 
-    $this->ppn_amount = $ppnAmount;
-    $this->discount_amount = $discountAmount;
-    $this->grand_total = $grandTotal;
+
+    /*
+    |--------------------------------------------------------------------------
+    | 7. SIMPAN HASIL
+    |--------------------------------------------------------------------------
+    */
+
+    $this->forceFill([
+      'subtotal' => $subtotal,
+      'discount_amount' => $discountAmount,
+      'dpp_amount' => $dppAmount,
+      'ppn_amount' => $ppnAmount,
+      'grand_total' => $grandTotal,
+    ])->saveQuietly();
   }
 }

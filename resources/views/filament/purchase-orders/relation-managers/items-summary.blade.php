@@ -2,15 +2,22 @@
   /** @var \App\Models\PurchaseOrder $record */
 
   $subtotal = (float) ($record->subtotal ?? 0);
-  $ppnAmount = (float) ($record->ppn_amount ?? 0);
-
-  $totalAfterPpn = $subtotal + $ppnAmount;
 
   $discountEnabled = (bool) ($record->discount_enabled ?? false);
   $discountPercent = (float) ($record->discount_percent ?? 0);
   $discountAmount = (float) ($record->discount_amount ?? 0);
 
-  $grandTotal = (float) ($record->grand_total ?? $totalAfterPpn);
+  $subtotalAfterDiscount = max(0, $subtotal - $discountAmount);
+
+  $dppEnabled = (bool) ($record->dpp_enabled ?? false);
+  $dppAmount = (float) ($record->dpp_amount ?? 0);
+
+  $ppnEnabled = (bool) ($record->ppn_enabled ?? false);
+  $ppnAmount = (float) ($record->ppn_amount ?? 0);
+
+  $ppnRate = $dppEnabled ? 12 : 11;
+
+  $grandTotal = (float) ($record->grand_total ?? 0);
 @endphp
 
 <td colspan="100%" class="p-0">
@@ -37,38 +44,6 @@
           </span>
         </div>
 
-        {{-- PPN --}}
-        @if ($record->ppn_enabled)
-          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-500 dark:text-gray-400">
-                PPN
-              </span>
-
-              <span
-                class="rounded-md bg-primary-50 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
-                12%
-              </span>
-            </div>
-
-            <span class="text-sm font-semibold text-gray-950 dark:text-white">
-              Rp {{ number_format($ppnAmount, 0, ',', '.') }}
-            </span>
-          </div>
-        @endif
-
-        {{-- TOTAL AFTER PPN --}}
-        <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-
-          <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Total setelah PPN
-          </span>
-
-          <span class="text-sm font-bold text-gray-950 dark:text-white">
-            Rp {{ number_format($totalAfterPpn, 0, ',', '.') }}
-          </span>
-        </div>
 
         {{-- DISCOUNT --}}
         @if ($discountEnabled)
@@ -88,14 +63,105 @@
             <span class="text-sm font-semibold text-danger-600 dark:text-danger-400">
               − Rp {{ number_format($discountAmount, 0, ',', '.') }}
             </span>
+
+          </div>
+
+
+          {{-- SUBTOTAL SETELAH DISKON --}}
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Subtotal setelah diskon
+            </span>
+
+            <span class="text-sm font-bold text-gray-950 dark:text-white">
+              Rp {{ number_format($subtotalAfterDiscount, 0, ',', '.') }}
+            </span>
+
+          </div>
+        @else
+          {{-- SUBTOTAL SETELAH DISKON --}}
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Subtotal setelah diskon
+            </span>
+
+            <span class="text-sm font-bold text-gray-950 dark:text-white">
+              Rp {{ number_format($subtotalAfterDiscount, 0, ',', '.') }}
+            </span>
+
           </div>
         @endif
+
+
+        {{-- DPP --}}
+        @if ($dppEnabled)
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-500 dark:text-gray-400">
+                Hasil DPP
+              </span>
+
+              <span
+                class="rounded-md bg-primary-50 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
+                0,916666666666667
+              </span>
+            </div>
+
+            <span class="text-sm font-semibold text-gray-950 dark:text-white">
+              Rp {{ number_format($dppAmount, 0, ',', '.') }}
+            </span>
+
+          </div>
+        @endif
+
+
+        {{-- PPN --}}
+        @if ($ppnEnabled)
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-500 dark:text-gray-400">
+                PPN
+              </span>
+
+              <span
+                class="rounded-md bg-primary-50 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
+                {{ $ppnRate }}%
+              </span>
+            </div>
+
+            <span class="text-sm font-semibold text-gray-950 dark:text-white">
+              Rp {{ number_format($ppnAmount, 0, ',', '.') }}
+            </span>
+
+          </div>
+        @endif
+
+
+        {{-- NILAI PAJAK --}}
+        @if ($ppnEnabled)
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Nilai Pajak
+            </span>
+
+            <span class="text-sm font-bold text-gray-950 dark:text-white">
+              Rp {{ number_format($ppnAmount, 0, ',', '.') }}
+            </span>
+
+          </div>
+        @endif
+
 
         {{-- GRAND TOTAL --}}
         <div class="flex items-center justify-between bg-gray-50 px-4 py-4 dark:bg-gray-900">
 
           <span class="text-sm font-bold text-gray-950 dark:text-white">
-            Total Akhir
+            Grand Total
           </span>
 
           <span class="text-lg font-bold text-primary-600 dark:text-primary-400">

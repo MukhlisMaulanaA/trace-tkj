@@ -192,29 +192,9 @@ class PurchaseOrderForm
           ->schema([
             Grid::make([
               'default' => 1,
-              'md' => 2,
+              'md' => 1,
             ])
               ->schema([
-
-                /*
-                |--------------------------------------------------------------------------
-                | PPN
-                |--------------------------------------------------------------------------
-                */
-
-                Toggle::make('ppn_enabled')
-                  ->label('Aktifkan PPN')
-                  ->default(false)
-                  ->live(),
-
-                TextInput::make('ppn_display')
-                  ->label('PPN')
-                  ->default('12%')
-                  ->disabled()
-                  ->dehydrated(false)
-                  ->helperText(
-                    'Ditampilkan 12%, tetapi kalkulasi menggunakan 11%.'
-                  ),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -244,7 +224,59 @@ class PurchaseOrderForm
                     (bool) $get('discount_enabled')
                   )
                   ->helperText(
-                    'Diskon dihitung dari total setelah PPN.'
+                    'Diskon dihitung dari subtotal.'
+                  ),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | DPP
+                |--------------------------------------------------------------------------
+                */
+
+                Toggle::make('dpp_enabled')
+                  ->label('Aktifkan DPP')
+                  ->default(false)
+                  ->live()
+                  ->columnSpanFull(),
+
+                TextInput::make('dpp_display')
+                  ->label('DPP')
+                  ->default('0,916666666666667')
+                  ->disabled()
+                  ->dehydrated(false)
+                  ->visible(
+                    fn($get): bool =>
+                    (bool) $get('dpp_enabled')
+                  )
+                  ->helperText(
+                    'Faktor DPP bersifat baku dan tidak dapat diubah.'
+                  ),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | PPN
+                |--------------------------------------------------------------------------
+                */
+
+                Toggle::make('ppn_enabled')
+                  ->label('Aktifkan PPN')
+                  ->default(false)
+                  ->live(),
+
+                TextInput::make('ppn_display')
+                  ->label('Tarif PPN')
+                  ->disabled()
+                  ->dehydrated(false)
+                  ->formatStateUsing(
+                    fn($state, $get): string =>
+                    (bool) $get('dpp_enabled')
+                    ? '12%'
+                    : '11%'
+                  )
+                  ->helperText(
+                    'DPP ON: 12%. DPP OFF: 11%.'
                   ),
 
               ]),

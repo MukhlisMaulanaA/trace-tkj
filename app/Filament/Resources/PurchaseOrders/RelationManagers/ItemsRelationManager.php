@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Tables\Grouping\Group;
+use Filament\Support\RawJs;
 
 class ItemsRelationManager extends RelationManager
 {
@@ -25,6 +26,14 @@ class ItemsRelationManager extends RelationManager
   protected static ?string $title = 'Item Purchase Order';
 
   protected static ?string $recordTitleAttribute = 'description';
+
+  /**
+   * Progress dapat dikelola langsung dari halaman View PurchaseOrder.
+   */
+  public function isReadOnly(): bool
+  {
+    return false;
+  }
 
   /*
   |--------------------------------------------------------------------------
@@ -76,6 +85,8 @@ class ItemsRelationManager extends RelationManager
                 TextInput::make('unit_price')
                   ->label('Unit Price')
                   ->numeric()
+                  ->mask(RawJs::make('$money($input)'))
+                  ->stripCharacters(',')
                   ->minValue(0)
                   ->required()
                   ->default(0)
@@ -89,6 +100,8 @@ class ItemsRelationManager extends RelationManager
                 TextInput::make('total_price')
                   ->label('Total Price')
                   ->numeric()
+                  ->mask(RawJs::make('$money($input)'))
+                  ->stripCharacters(',')
                   ->prefix('Rp')
                   ->disabled()
                   ->dehydrated()
@@ -211,10 +224,14 @@ class ItemsRelationManager extends RelationManager
     Set $set
   ): void {
     $quantity = (float) ($get('quantity') ?? 0);
-    $unitPrice = (float) ($get('unit_price') ?? 0);
+
+    // Hilangkan koma (jika masih tersisa) sebelum dikalikan
+    $unitPriceStr = (string) ($get('unit_price') ?? '0');
+    $unitPrice = (float) str_replace(',', '', $unitPriceStr);
 
     $total = $quantity * $unitPrice;
 
+    // Set nilai raw, mask akan otomatis memformatnya dengan koma di tampilan
     $set('total_price', number_format($total, 2, '.', ''));
   }
 

@@ -29,7 +29,7 @@
 
   /*
     |--------------------------------------------------------------------------
-    | TAX / DISCOUNT / DPP
+    | TAX / DISCOUNT
     |
     | Nilai amount diambil dari database agar historical PO konsisten.
     |--------------------------------------------------------------------------
@@ -451,6 +451,9 @@
       padding-bottom: 6px;
     }
 
+    .summary-dpp {
+      height: 25px;
+    }
 
     /*
         |--------------------------------------------------------------------------
@@ -945,11 +948,32 @@
           </td>
         </tr>
 
-        {{-- DISKON --}}
+        @if ($ppnEnabled)
+          <tr>
+            <td class="summary-label">
+              PPN {{ rtrim(rtrim(number_format($ppnDisplayPercentage, 2, ',', '.'), '0'), ',') }}%
+            </td>
+
+            <td class="summary-value">
+              {{ $money($ppnAmount) }}
+            </td>
+          </tr>
+
+          <tr>
+            <td class="summary-label">
+              SUBTOTAL + PPN
+            </td>
+
+            <td class="summary-value">
+              {{ $money($subtotalAfterPpn) }}
+            </td>
+          </tr>
+        @endif
+
         @if ($discountEnabled)
           <tr>
             <td class="summary-label">
-              DISKON {{ rtrim(rtrim(number_format($discountPercent, 2, ',', '.'), '0'), ',') }}%
+              DISKON {{ rtrim(rtrim(number_format($discountPercentage, 2, ',', '.'), '0'), ',') }}%
             </td>
 
             <td class="summary-value">
@@ -958,53 +982,12 @@
           </tr>
         @endif
 
-        {{-- SUBTOTAL SETELAH DISKON --}}
-        <tr>
-          <td class="summary-label">
-            SUBTOTAL SETELAH DISKON
-          </td>
+        {{-- DPP if necessary --}}
+        <tr class="summary-dpp" contenteditable="true">
+          <td class="summary-label"></td>
 
-          <td class="summary-value">
-            {{ $money($subtotalAfterDiscount) }}
-          </td>
+          <td class="summary-value"></td>
         </tr>
-
-        {{-- DPP --}}
-        @if ($dppEnabled)
-          <tr>
-            <td class="summary-label">
-              HASIL DPP
-            </td>
-
-            <td class="summary-value">
-              {{ $money($dppAmount) }}
-            </td>
-          </tr>
-        @endif
-
-        {{-- PPN RATE --}}
-        @if ($ppnEnabled)
-          <tr>
-            <td class="summary-label">
-              PPN {{ $ppnRate }}%
-            </td>
-
-            <td class="summary-value">
-              {{ $ppnRate }}%
-            </td>
-          </tr>
-
-          {{-- NILAI PAJAK --}}
-          <tr>
-            <td class="summary-label">
-              NILAI PAJAK
-            </td>
-
-            <td class="summary-value">
-              {{ $money($ppnAmount) }}
-            </td>
-          </tr>
-        @endif
 
         <tr class="grand-total">
           <td class="summary-label">
