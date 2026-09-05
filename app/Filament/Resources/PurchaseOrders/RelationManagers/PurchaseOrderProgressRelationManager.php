@@ -168,33 +168,33 @@ class PurchaseOrderProgressRelationManager extends RelationManager
                       min(100, $percentage)
                     );
                   }
-                )
+                ),
 
                 /*
                  * Invoice tidak boleh melebihi
-                 * sisa tagihan.
+                 * sisa tagihan. (tidak digunakan)
                  */
-                ->rules([
-                  function (?Model $record) {
-                    return function (string $attribute, mixed $value, \Closure $fail) use ($record): void {
+                // ->rules([
+                //   function (?Model $record) {
+                //     return function (string $attribute, mixed $value, \Closure $fail) use ($record): void {
 
-                      $amount = $this->parseAmount($value);
+                //       $amount = $this->parseAmount($value);
 
-                      $remaining =
-                        $this->getRemainingBeforeCurrentInvoice(
-                          $record
-                        );
+                //       $remaining =
+                //         $this->getRemainingBeforeCurrentInvoice(
+                //           $record
+                //         );
 
-                      if ($amount > $remaining) {
-                        $fail(
-                          'Invoice tidak boleh melebihi '
-                          . $this->formatRupiah($remaining)
-                          . '.'
-                        );
-                      }
-                    };
-                  },
-                ]),
+                //       if ($amount > $remaining) {
+                //         $fail(
+                //           'Invoice tidak boleh melebihi '
+                //           . $this->formatRupiah($remaining)
+                //           . '.'
+                //         );
+                //       }
+                //     };
+                //   },
+                // ]),
 
               TextInput::make('percentage')
                 ->label('Progress Percentage')

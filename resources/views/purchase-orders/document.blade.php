@@ -950,7 +950,7 @@
         @endif
 
         {{-- DPP if necessary --}}
-        <tr class="summary-dpp">
+        <tr class="summary-dpp" contenteditable="true">
           <td class="summary-label"></td>
           
           <td class="summary-value"></td>

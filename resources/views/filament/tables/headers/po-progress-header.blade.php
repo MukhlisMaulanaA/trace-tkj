@@ -12,7 +12,7 @@
 
   $grandTotal = (float) ($purchaseOrder->grand_total ?? 0);
 
-  $currentProgress = $grandTotal > 0 ? max(0, min(100, round(($totalPaid / $grandTotal) * 100, 2))) : 0;
+  $currentProgress = $grandTotal > 0 ? max(0, min(1000, round(($totalPaid / $grandTotal) * 100, 2))) : 0;
 
   $status = match (true) {
       $currentProgress >= 100 => 'Selesai dibayar',

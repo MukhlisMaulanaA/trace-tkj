@@ -91,6 +91,7 @@ class PurchaseOrder extends Model
     'location',
     'quotation_no',
     'pic',
+    'pdf_file',
     'status',
     'notes',
     'subtotal',

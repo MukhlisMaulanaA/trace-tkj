@@ -3,15 +3,17 @@
 namespace App\Filament\Resources\PurchaseOrders\Schemas;
 
 use App\Models\Project;
+use App\Models\PurchaseOrder;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Set;
-use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Schema;
 
 class PurchaseOrderForm
 {
@@ -146,6 +148,21 @@ class PurchaseOrderForm
                   ->helperText(
                     'Otomatis diambil dari project dan masih dapat disesuaikan.'
                   ),
+
+                FileUpload::make('pdf_file')
+                  ->label('File PDF Client')
+                  ->acceptedFileTypes(['application/pdf'])
+                  ->disk('public')
+                  ->directory('purchase-orders')
+                  ->maxSize(10240)
+                  ->downloadable()
+                  ->required()
+                  ->openable()
+                  ->disabled(
+                    fn(?PurchaseOrder $record): bool =>
+                    $record?->status === 'submitted'
+                  )
+                  ->columnSpanFull(),
               ]),
           ]),
 
