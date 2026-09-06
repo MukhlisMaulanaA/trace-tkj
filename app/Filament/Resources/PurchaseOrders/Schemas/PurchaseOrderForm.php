@@ -242,7 +242,9 @@ class PurchaseOrderForm
 
                 TextInput::make('dpp_display')
                   ->label('DPP')
-                  ->default('0,916666666666667')
+                  ->formatStateUsing(
+                    fn(): string => '0,916666666666667'
+                  )
                   ->disabled()
                   ->dehydrated(false)
                   ->visible(
