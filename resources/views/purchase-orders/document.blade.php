@@ -931,7 +931,7 @@
     {{-- =========================================================
             SUMMARY
         ========================================================== --}}
-    <div class="summary-wrapper">
+    <div class="summary-wrapper" contenteditable="true">
 
       <table class="summary-table">
 
