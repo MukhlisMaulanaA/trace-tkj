@@ -3,17 +3,19 @@
 namespace App\Filament\Resources\PurchaseOrders\Schemas;
 
 use App\Models\Project;
+use Filament\Support\RawJs;
+use Filament\Schemas\Schema;
 use App\Models\PurchaseOrder;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Schema;
 
 class PurchaseOrderForm
 {
@@ -78,7 +80,7 @@ class PurchaseOrderForm
               )
               ->getOptionLabelFromRecordUsing(
                 fn(Project $record): string =>
-                "{$record->id} — {$record->nama_project}"
+                  "{$record->id} — {$record->nama_project}"
               )
               ->searchable([
                 'id',
@@ -160,7 +162,7 @@ class PurchaseOrderForm
                   ->openable()
                   ->disabled(
                     fn(?PurchaseOrder $record): bool =>
-                    $record?->status === 'submitted'
+                      $record?->status === 'submitted'
                   )
                   ->columnSpanFull(),
               ]),
@@ -197,15 +199,43 @@ class PurchaseOrderForm
               ->schema([
 
                 /*
-                |--------------------------------------------------------------------------
-                | DISCOUNT
-                |--------------------------------------------------------------------------
-                */
+|--------------------------------------------------------------------------
+| DISCOUNT
+|--------------------------------------------------------------------------
+*/
 
                 Toggle::make('discount_enabled')
                   ->label('Aktifkan Diskon')
                   ->default(false)
                   ->live()
+                  ->afterStateUpdated(function (bool $state, Set $set): void {
+                    if (!$state) {
+                      $set('discount_type', 'percent');
+                      $set('discount_percent', 0);
+                      $set('discount_amount', 0);
+                    }
+                  })
+                  ->columnSpanFull(),
+
+                Select::make('discount_type')
+                  ->label('Metode Diskon')
+                  ->options([
+                    'percent' => 'Persentase',
+                    'amount' => 'Nominal',
+                  ])
+                  ->default('percent')
+                  ->live()
+                  ->visible(
+                    fn(Get $get): bool =>
+                      (bool) $get('discount_enabled')
+                  )
+                  ->required(
+                    fn(Get $get): bool =>
+                      (bool) $get('discount_enabled')
+                  )
+                  ->helperText(
+                    'Pilih apakah diskon dimasukkan berdasarkan persentase atau nominal.'
+                  )
                   ->columnSpanFull(),
 
                 TextInput::make('discount_percent')
@@ -216,15 +246,40 @@ class PurchaseOrderForm
                   ->maxValue(100)
                   ->default(0)
                   ->visible(
-                    fn($get): bool =>
-                    (bool) $get('discount_enabled')
+                    fn(Get $get): bool =>
+                      (bool) $get('discount_enabled')
+                      && $get('discount_type') === 'percent'
                   )
                   ->required(
-                    fn($get): bool =>
-                    (bool) $get('discount_enabled')
+                    fn(Get $get): bool =>
+                      (bool) $get('discount_enabled')
+                      && $get('discount_type') === 'percent'
                   )
                   ->helperText(
                     'Diskon dihitung dari subtotal.'
+                  ),
+
+                TextInput::make('discount_amount')
+                  ->label('Nilai Diskon')
+                  ->prefix('Rp')
+                  ->mask(
+                    RawJs::make('$money($input)')
+                  )
+                  ->stripCharacters(',')
+                  ->numeric()
+                  ->minValue(0)
+                  ->visible(
+                    fn(Get $get): bool =>
+                      (bool) $get('discount_enabled')
+                      && $get('discount_type') === 'amount'
+                  )
+                  ->required(
+                    fn(Get $get): bool =>
+                      (bool) $get('discount_enabled')
+                      && $get('discount_type') === 'amount'
+                  )
+                  ->helperText(
+                    'Masukkan nominal diskon. Nilai tidak boleh melebihi subtotal.'
                   ),
 
 
@@ -249,7 +304,7 @@ class PurchaseOrderForm
                   ->dehydrated(false)
                   ->visible(
                     fn($get): bool =>
-                    (bool) $get('dpp_enabled')
+                      (bool) $get('dpp_enabled')
                   )
                   ->helperText(
                     'Faktor DPP bersifat baku dan tidak dapat diubah.'
@@ -273,9 +328,9 @@ class PurchaseOrderForm
                   ->dehydrated(false)
                   ->formatStateUsing(
                     fn($state, $get): string =>
-                    (bool) $get('dpp_enabled')
-                    ? '12%'
-                    : '11%'
+                      (bool) $get('dpp_enabled')
+                      ? '12%'
+                      : '11%'
                   )
                   ->helperText(
                     'DPP ON: 12%. DPP OFF: 11%.'

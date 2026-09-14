@@ -94,6 +94,7 @@ class PurchaseOrder extends Model
     'subtotal',
 
     'discount_enabled',
+    'discount_type',
     'discount_percent',
     'discount_amount',
 
@@ -286,22 +287,61 @@ class PurchaseOrder extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | 2. DISCOUNT
+    | DISCOUNT
     |--------------------------------------------------------------------------
-    | Diskon dihitung dari subtotal.
     */
 
     $discountAmount = 0;
+    $discountPercent = 0;
 
     if ($this->discount_enabled) {
-      $discountPercent = max(
-        0,
-        min(100, (float) ($this->discount_percent ?? 0))
-      );
+      $discountType = $this->discount_type ?: 'percent';
 
-      $discountAmount = round(
-        $subtotal * ($discountPercent / 100)
-      );
+      if ($discountType === 'amount') {
+        /*
+        |--------------------------------------------------------------------------
+        | DISCOUNT BY NOMINAL
+        |--------------------------------------------------------------------------
+        |
+        | Nominal diskon menjadi nilai utama.
+        | Tidak boleh melebihi subtotal.
+        |
+        */
+
+        $discountAmount = max(
+          0,
+          min(
+            $subtotal,
+            round((float) ($this->discount_amount ?? 0))
+          )
+        );
+
+        /*
+        | Hitung persentase hanya sebagai informasi.
+        */
+
+        $discountPercent = $subtotal > 0
+          ? round(($discountAmount / $subtotal) * 100, 2)
+          : 0;
+      } else {
+        /*
+        |--------------------------------------------------------------------------
+        | DISCOUNT BY PERCENTAGE
+        |--------------------------------------------------------------------------
+        */
+
+        $discountPercent = max(
+          0,
+          min(
+            100,
+            (float) ($this->discount_percent ?? 0)
+          )
+        );
+
+        $discountAmount = round(
+          $subtotal * ($discountPercent / 100)
+        );
+      }
     }
 
 
@@ -394,6 +434,7 @@ class PurchaseOrder extends Model
 
     $this->forceFill([
       'subtotal' => $subtotal,
+      'discount_percent' => $discountPercent,
       'discount_amount' => $discountAmount,
       'dpp_amount' => $dppAmount,
       'ppn_amount' => $ppnAmount,

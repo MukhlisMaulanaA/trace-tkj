@@ -949,7 +949,8 @@
         @if ($discountEnabled)
           <tr>
             <td class="summary-label">
-              DISKON {{ rtrim(rtrim(number_format($discountPercent, 2, ',', '.'), '0'), ',') }}%
+              {{-- DISKON {{ rtrim(rtrim(number_format($discountPercent, 2, ',', '.'), '0'), ',') }}% --}}
+              DISKON
             </td>
 
             <td class="summary-value">

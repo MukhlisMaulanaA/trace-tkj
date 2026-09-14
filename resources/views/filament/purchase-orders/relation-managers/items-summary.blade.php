@@ -4,7 +4,11 @@
   $subtotal = (float) ($record->subtotal ?? 0);
 
   $discountEnabled = (bool) ($record->discount_enabled ?? false);
+
+  $discountType = $record->discount_type ?? 'percentage';
+
   $discountPercent = (float) ($record->discount_percent ?? 0);
+
   $discountAmount = (float) ($record->discount_amount ?? 0);
 
   $subtotalAfterDiscount = max(0, $subtotal - $discountAmount);
@@ -47,52 +51,44 @@
 
         {{-- DISCOUNT --}}
         @if ($discountEnabled)
-          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
 
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             <div class="flex items-center gap-2">
               <span class="text-sm text-gray-500 dark:text-gray-400">
                 Diskon
               </span>
 
-              <span
-                class="rounded-md bg-warning-50 px-2 py-0.5 text-xs font-semibold text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">
-                {{ number_format($discountPercent, 2, ',', '.') }}%
-              </span>
+              @if ($discountType === 'percent')
+                <span
+                  class="rounded-md bg-warning-50 px-2 py-0.5 text-xs font-semibold text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">
+                  {{ number_format($discountPercent, 2, ',', '.') }}%
+                </span>
+              @else
+                <span
+                  class="rounded-md bg-warning-50 px-2 py-0.5 text-xs font-semibold text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">
+                  Nominal
+                </span>
+              @endif
             </div>
 
             <span class="text-sm font-semibold text-danger-600 dark:text-danger-400">
               − Rp {{ number_format($discountAmount, 0, ',', '.') }}
             </span>
-
           </div>
 
-
-          {{-- SUBTOTAL SETELAH DISKON --}}
-          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-
-            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Subtotal setelah diskon
-            </span>
-
-            <span class="text-sm font-bold text-gray-950 dark:text-white">
-              Rp {{ number_format($subtotalAfterDiscount, 0, ',', '.') }}
-            </span>
-
-          </div>
-        @else
-          {{-- SUBTOTAL SETELAH DISKON --}}
-          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-
-            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Subtotal setelah diskon
-            </span>
-
-            <span class="text-sm font-bold text-gray-950 dark:text-white">
-              Rp {{ number_format($subtotalAfterDiscount, 0, ',', '.') }}
-            </span>
-
-          </div>
         @endif
+
+
+        {{-- SUBTOTAL SETELAH DISKON --}}
+        <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Subtotal setelah diskon
+          </span>
+
+          <span class="text-sm font-bold text-gray-950 dark:text-white">
+            Rp {{ number_format($subtotalAfterDiscount, 0, ',', '.') }}
+          </span>
+        </div>
 
 
         {{-- DPP --}}
