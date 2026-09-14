@@ -142,7 +142,7 @@
 
 
         {{-- NILAI PAJAK --}}
-        @if ($ppnEnabled)
+        {{-- @if ($ppnEnabled)
           <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
 
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -154,7 +154,7 @@
             </span>
 
           </div>
-        @endif
+        @endif --}}
 
 
         {{-- GRAND TOTAL --}}

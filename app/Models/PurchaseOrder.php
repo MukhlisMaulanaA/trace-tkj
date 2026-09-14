@@ -382,7 +382,7 @@ class PurchaseOrder extends Model
 
     $grandTotal = max(
       0,
-      round($subtotal + $ppnAmount)
+      round($subtotalAfterDiscount + $ppnAmount)
     );
 
 
