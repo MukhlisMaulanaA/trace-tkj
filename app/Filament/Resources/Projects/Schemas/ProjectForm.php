@@ -57,6 +57,12 @@ class ProjectForm
                   ->required()
                   ->maxLength(255),
 
+                TextInput::make('kontak_person')
+                  ->label('Kontak Person Customer')
+                  ->placeholder('Masukkan nama kontak person customer')
+                  ->maxLength(255)
+                  ->helperText('Nama orang yang dapat dihubungi terkait project.'),
+
                 TextInput::make('lokasi')
                   ->label('Lokasi Project')
                   ->placeholder('Lokasi atau area pelaksanaan')

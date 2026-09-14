@@ -20,6 +20,7 @@ class Project extends Model
     'id',
     'nama_project',
     'kustomer',
+    'kontak_person',
     'lokasi',
     'nomor_quotation',
     'pic',

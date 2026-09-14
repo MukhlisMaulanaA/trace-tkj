@@ -15,6 +15,9 @@ class ProjectInfolist
           ->label('ID'),
         TextEntry::make('nama_project'),
         TextEntry::make('kustomer'),
+        TextEntry::make('kontak_person')
+          ->label('Kontak Person Customer')
+          ->placeholder('-'),
         TextEntry::make('lokasi'),
         TextEntry::make('nomor_quotation'),
         TextEntry::make('pic'),
