@@ -125,89 +125,77 @@ class PurchaseOrderProgressRelationManager extends RelationManager
                 ->required(),
             ]),
 
-          Grid::make(2)
-            ->schema([
+          Grid::make(2)->schema([
+            TextInput::make('amount')
+              ->label('Invoice Amount')
+              ->prefix('Rp')
+              ->mask(RawJs::make('$money($input)'))
+              ->stripCharacters(',')
+              ->numeric()
+              ->live()
+              ->afterStateUpdated(function ($state, Get $get, Set $set): void {
+                $purchaseOrder = $this->getOwnerRecord();
 
-              TextInput::make('amount')
-                ->label('Invoice Amount')
-                ->prefix('Rp')
-                ->required()
-                ->live(onBlur: true)
-                ->mask(
-                  RawJs::make('$money($input)')
-                )
-                ->stripCharacters(',')
-                ->numeric()
-                ->live(onBlur: true)
-                /*
-                 * Hitung progress otomatis ketika
-                 * user mengubah nilai invoice.
-                 */
-                ->afterStateUpdated(
-                  function (mixed $state, Set $set) use ($purchaseOrder): void {
+                $grandTotal = (float) ($purchaseOrder->grand_total ?? 0);
 
-                    $amount = $this->parseAmount($state);
+                if ($grandTotal <= 0) {
+                  $set('percentage', 0);
 
-                    $grandTotal = (float) (
-                      $purchaseOrder->grand_total ?? 0
-                    );
+                  return;
+                }
 
-                    if ($grandTotal <= 0) {
-                      $set('percentage', 0);
+                $amount = (float) str_replace(
+                  ['.', ','],
+                  '',
+                  (string) $state
+                );
 
-                      return;
-                    }
+                $percentage = ($amount / $grandTotal) * 100;
 
-                    $percentage = round(
-                      ($amount / $grandTotal) * 100,
-                      2
-                    );
+                $set(
+                  'percentage',
+                  round(
+                    max(0, min(100, $percentage)),
+                    2
+                  )
+                );
+              })
+              ->required(),
 
-                    $set(
-                      'percentage',
-                      min(100, $percentage)
-                    );
-                  }
-                ),
+            TextInput::make('percentage')
+              ->label('Progress Percentage')
+              ->numeric()
+              ->minValue(0)
+              ->maxValue(100)
+              ->suffix('%')
+              ->live()
+              ->afterStateUpdated(function ($state, Get $get, Set $set): void {
+                $purchaseOrder = $this->getOwnerRecord();
 
-                /*
-                 * Invoice tidak boleh melebihi
-                 * sisa tagihan. (tidak digunakan)
-                 */
-                // ->rules([
-                //   function (?Model $record) {
-                //     return function (string $attribute, mixed $value, \Closure $fail) use ($record): void {
+                $grandTotal = (float) ($purchaseOrder->grand_total ?? 0);
 
-                //       $amount = $this->parseAmount($value);
+                if ($grandTotal <= 0) {
+                  $set('amount', 0);
 
-                //       $remaining =
-                //         $this->getRemainingBeforeCurrentInvoice(
-                //           $record
-                //         );
+                  return;
+                }
 
-                //       if ($amount > $remaining) {
-                //         $fail(
-                //           'Invoice tidak boleh melebihi '
-                //           . $this->formatRupiah($remaining)
-                //           . '.'
-                //         );
-                //       }
-                //     };
-                //   },
-                // ]),
+                $percentage = max(
+                  0,
+                  min(100, (float) $state)
+                );
 
-              TextInput::make('percentage')
-                ->label('Progress Percentage')
-                ->numeric()
-                ->minValue(0)
-                ->maxValue(100)
-                ->suffix('%')
-                ->disabled()
-                ->dehydrated(false)
-                ->helperText(
-                  'Calculated automatically based on PO grand total'
-                ),
-            ]),
+                $amount = round(
+                  $grandTotal * ($percentage / 100)
+                );
+
+                $set('amount', $amount);
+              })
+              ->required()
+              ->helperText(
+                'Isi persentase atau nominal. Nilai lainnya akan dihitung otomatis dari PO Grand Total.'
+              ),
+          ]),
 
           /*
            * INFORMASI TAGIHAN
@@ -333,14 +321,14 @@ class PurchaseOrderProgressRelationManager extends RelationManager
           ->label('Update')
           ->visible(
             fn(Model $record): bool =>
-            !$record->is_system
+              !$record->is_system
           ),
 
         DeleteAction::make()
           ->label('Delete')
           ->visible(
             fn(Model $record): bool =>
-            !$record->is_system
+              !$record->is_system
           ),
       ]);
   }
