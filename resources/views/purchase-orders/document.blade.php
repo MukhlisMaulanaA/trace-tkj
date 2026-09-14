@@ -990,12 +990,12 @@
             </td>
 
             <td class="summary-value">
-              {{ $ppnRate }}%
+              {{ $money($ppnAmount) }}
             </td>
           </tr>
 
           {{-- NILAI PAJAK --}}
-          <tr>
+          {{-- <tr>
             <td class="summary-label">
               NILAI PAJAK
             </td>
@@ -1003,7 +1003,7 @@
             <td class="summary-value">
               {{ $money($ppnAmount) }}
             </td>
-          </tr>
+          </tr> --}}
         @endif
 
         <tr class="grand-total">
