@@ -211,7 +211,7 @@ class PurchaseOrderProgressRelationManager extends RelationManager
           Grid::make(2)
             ->schema([
 
-              TextInput::make('po_grand_total')
+              Placeholder::make('po_grand_total')
                 ->label('PO Grand Total')
                 ->content(
                   fn(): string => $this->formatRupiah(
@@ -221,7 +221,7 @@ class PurchaseOrderProgressRelationManager extends RelationManager
                   )
                 ),
 
-              TextInput::make('remaining_amount')
+              Placeholder::make('remaining_amount')
                 ->label('Sisa Tagihan')
                 ->content(
                   function (Get $get, ?Model $record): string {
