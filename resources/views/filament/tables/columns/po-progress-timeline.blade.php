@@ -76,6 +76,11 @@
           <p class="mt-1 text-sm font-medium text-gray-400 dark:text-gray-500">
             {{ $dateText }} · {{ $formattedAmount }}
           </p>
+          @if (filled($record->description))
+            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+              {{ $record->description }}
+            </p>
+          @endif
 
         </div>
 

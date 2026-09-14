@@ -2,23 +2,25 @@
 
 namespace App\Filament\Resources\PurchaseOrders\RelationManagers;
 
+use Filament\Tables\Table;
+use Filament\Support\RawJs;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DateTimePicker;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\ViewColumn;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Support\RawJs;
-use Filament\Tables\Columns\ViewColumn;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
+
 
 class PurchaseOrderProgressRelationManager extends RelationManager
 {
@@ -113,17 +115,22 @@ class PurchaseOrderProgressRelationManager extends RelationManager
       Section::make('Invoice Details')
         ->schema([
 
-          Grid::make(2)
-            ->schema([
-              TextInput::make('title')
+          Grid::make(2)->schema([
+            TextInput::make('title')
                 ->label('Invoice Title/Number')
                 ->placeholder('INV-001, DOC-2026-001, etc.')
                 ->required(),
 
-              DateTimePicker::make('invoice_date')
+            DateTimePicker::make('invoice_date')
                 ->label('Invoice Date')
                 ->required(),
-            ]),
+        ]),
+
+        Textarea::make('description')
+            ->label('Invoice Description')
+            ->placeholder('Masukkan keterangan invoice/progres...')
+            ->rows(3)
+            ->columnSpanFull(),
 
           Grid::make(2)->schema([
             TextInput::make('amount')
@@ -252,9 +259,9 @@ class PurchaseOrderProgressRelationManager extends RelationManager
             ->acceptedFileTypes([
               'application/pdf'
             ])
-            ->maxSize(5 * 1024)
+            ->maxSize(20 * 1024)
             ->helperText(
-              'Upload PDF invoice (max 5MB)'
+              'Upload PDF invoice (max 20MB)'
             )
             ->columnSpanFull(),
         ]),

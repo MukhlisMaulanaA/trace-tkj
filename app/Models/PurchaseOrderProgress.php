@@ -13,6 +13,7 @@ class PurchaseOrderProgress extends Model
   protected $fillable = [
     'purchase_order_id',
     'title',
+    'description',
     'invoice_date',
     'pdf_file',
     'amount',
