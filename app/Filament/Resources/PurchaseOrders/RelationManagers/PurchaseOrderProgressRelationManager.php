@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -210,7 +211,7 @@ class PurchaseOrderProgressRelationManager extends RelationManager
           Grid::make(2)
             ->schema([
 
-              Placeholder::make('po_grand_total')
+              TextEntry::make('po_grand_total')
                 ->label('PO Grand Total')
                 ->content(
                   fn(): string => $this->formatRupiah(
@@ -220,7 +221,7 @@ class PurchaseOrderProgressRelationManager extends RelationManager
                   )
                 ),
 
-              Placeholder::make('remaining_amount')
+              TextEntry::make('remaining_amount')
                 ->label('Sisa Tagihan')
                 ->content(
                   function (Get $get, ?Model $record): string {
