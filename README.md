@@ -1,58 +1,84 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TKJ Project & Purchase Order Tracker
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+An internal application for PT. Tanjung Karya Jaya to manage projects, purchase orders (POs), project milestones, and invoice progress.
 
-## About Laravel
+It gives operations, project, and finance teams one place to keep project details, PO line items and totals, source PDFs, and payment history. The browser-based administration area is powered by Laravel and Filament.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## What the application supports
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Project records with customer, location, quotation, contact person, and PIC details.
+- A dated progress timeline for each project.
+- Purchase orders linked to projects, with copied details that can be adjusted per PO.
+- PO line items, discounts, DPP, PPN, and automatic totals.
+- Client PO and invoice PDF uploads.
+- Invoice/payment progress against a PO’s grand total.
+- A print-friendly TKJ PO document.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Documentation
 
-## Learning Laravel
+| Audience | Document |
+| --- | --- |
+| Operations, project managers, finance, and general users | [User guide](docs/USER_GUIDE.md) |
+| Developers and technical administrators | [Technical reference](docs/TECHNICAL_REFERENCE.md) |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Workflow
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```text
+Create project → update project progress → create PO → add PO items
+       → verify totals/documents → record invoices → monitor payment progress
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Projects and POs are separate records. Selecting a project copies its customer, location, quotation number, and PIC into the PO; changing the copied PO values does not change the project.
 
-## Contributing
+## Quick start
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Requirements: PHP 8.3+, Composer, Node.js/npm, and a supported database. The default environment configuration uses SQLite.
 
-## Code of Conduct
+```bash
+composer install
+npm install
+copy .env.example .env
+php artisan key:generate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Configure the database in `.env`; for the default SQLite setup, create `database/database.sqlite`. Then run:
 
-## Security Vulnerabilities
+```bash
+php artisan migrate
+php artisan storage:link
+npm run build
+php artisan serve
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Open `http://localhost:8000`; it redirects to `/admin`. On macOS/Linux, use `cp` instead of `copy`.
 
-## License
+`composer dev` starts the local server, queue listener, log viewer, and Vite. The development seeder creates `test@example.com`; use it only for local development and replace it with a real administrator account before deployment.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Common commands
+
+| Purpose | Command |
+| --- | --- |
+| Run tests | `composer test` |
+| Check style | `./vendor/bin/pint --test` |
+| Apply style | `./vendor/bin/pint` |
+| Build assets | `npm run build` |
+| Start development services | `composer dev` |
+
+## Repository map
+
+| Location | Purpose |
+| --- | --- |
+| `app/Models` | Domain data rules and calculations |
+| `app/Filament/Resources` | Admin pages, forms, tables, and relation managers |
+| `app/Http/Controllers/PurchaseOrderDocumentController.php` | Generated PO document endpoint |
+| `resources/views` | Print layout and timeline UI |
+| `database/migrations` | Database schema history |
+| `docs` | Stakeholder documentation |
+
+## Operations and security
+
+- The admin panel requires sign-in, but the current app has no role-based access control: authenticated users can access the available resources.
+- Uploads use the public filesystem disk: POs are in `purchase-orders/` and invoice PDFs in `invoices/`. Run `php artisan storage:link` and back up both files and database.
+- Generated PO documents and uploaded files contain business data. Share them only through approved channels.
+
+Keep these documents updated when workflows, totals, files, access controls, or deployment requirements change.
