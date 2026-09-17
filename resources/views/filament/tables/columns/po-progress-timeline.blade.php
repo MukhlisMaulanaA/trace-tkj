@@ -2,7 +2,7 @@
   /** @var \App\Models\PurchaseOrderProgress $record */
 
   $isSystem = (bool) $record->is_system;
-  $progress = (int) ($record->percentage ?? 0);
+  $progress = round(max(0, min(100, (float) ($record->percentage ?? 0))), 2);
   $dateText = $record->invoice_date?->translatedFormat('j F Y, H:i') ?? '-';
   $title = $record->title ?? 'Invoice';
   $amount = (float) $record->amount;

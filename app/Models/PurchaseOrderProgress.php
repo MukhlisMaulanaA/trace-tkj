@@ -32,53 +32,53 @@ class PurchaseOrderProgress extends Model
   }
 
   /**
-   * Get cumulative total of all invoices up to (and including) this record.
+   * Calculate invoice percentage based on:
    *
-   * @return float
-   */
-  public function getCumulativeTotal(): float
-  {
-    return (float) $this->purchaseOrder
-      ->progresses()
-      ->where('invoice_date', '<=', $this->invoice_date)
-      ->sum('amount');
-  }
-
-  /**
-   * Calculate the progress percentage based on cumulative invoice amounts and PO grand total.
+   * invoice amount / PO grand total × 100
    *
-   * @return void
+   * Percentage represents this invoice itself,
+   * not cumulative progress.
    */
   public function calculatePercentage(): void
   {
-    // Get the PO's grand_total - use fresh query if relationship not loaded
     $grandTotal = 0;
-    
+
     if ($this->purchase_order_id) {
       if ($this->relationLoaded('purchaseOrder') && $this->purchaseOrder) {
-        $grandTotal = $this->purchaseOrder->grand_total ?? 0;
+        $grandTotal = (float) ($this->purchaseOrder->grand_total ?? 0);
       } else {
-        // Fetch fresh from database if relationship not loaded
-        $po = PurchaseOrder::find($this->purchase_order_id);
-        $grandTotal = $po?->grand_total ?? 0;
+        $purchaseOrder = PurchaseOrder::find($this->purchase_order_id);
+
+        $grandTotal = (float) ($purchaseOrder?->grand_total ?? 0);
       }
     }
 
-    if ($grandTotal <= 0) {
+    $amount = (float) ($this->amount ?? 0);
+
+    if ($grandTotal <= 0 || $amount <= 0) {
       $this->percentage = 0;
-    } else {
-      // Calculate cumulative percentage
-      $cumulativeAmount = $this->getCumulativeTotal();
-      $this->percentage = round(($cumulativeAmount / $grandTotal) * 100, 2);
+
+      return;
     }
+
+    $this->percentage = round(
+      max(
+        0,
+        min(
+          100,
+          ($amount / $grandTotal) * 100
+        )
+      ),
+      2
+    );
   }
 
   /**
-   * Automatically calculate percentage before saving.
+   * Automatically synchronize percentage before saving.
    */
   protected static function booted(): void
   {
-    static::saving(function (PurchaseOrderProgress $progress) {
+    static::saving(function (PurchaseOrderProgress $progress): void {
       $progress->calculatePercentage();
     });
   }
@@ -88,4 +88,3 @@ class PurchaseOrderProgress extends Model
     return $this->belongsTo(PurchaseOrder::class);
   }
 }
-

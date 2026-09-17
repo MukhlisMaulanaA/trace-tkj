@@ -118,16 +118,16 @@ class PurchaseOrderProgressRelationManager extends RelationManager
 
           Grid::make(2)->schema([
             TextInput::make('title')
-                ->label('Invoice Title/Number')
-                ->placeholder('INV-001, DOC-2026-001, etc.')
-                ->required(),
+              ->label('Invoice Title/Number')
+              ->placeholder('INV-001, DOC-2026-001, etc.')
+              ->required(),
 
             DateTimePicker::make('invoice_date')
-                ->label('Invoice Date')
-                ->required(),
-        ]),
+              ->label('Invoice Date')
+              ->required(),
+          ]),
 
-        Textarea::make('description')
+          Textarea::make('description')
             ->label('Invoice Description')
             ->placeholder('Masukkan keterangan invoice/progres...')
             ->rows(3)
@@ -152,11 +152,7 @@ class PurchaseOrderProgressRelationManager extends RelationManager
                   return;
                 }
 
-                $amount = (float) str_replace(
-                  ['.', ','],
-                  '',
-                  (string) $state
-                );
+                $amount = $this->parseAmount($state);
 
                 $percentage = ($amount / $grandTotal) * 100;
 
@@ -308,36 +304,40 @@ class PurchaseOrderProgressRelationManager extends RelationManager
       ->headerActions([
         CreateAction::make()
           ->label('Tambah Invoice')
+          ->mutateFormDataUsing(function (array $data): array {
+            $data['is_system'] = false;
 
-          ->mutateFormDataUsing(
-            function (array $data): array {
+            return $data;
+          })
+          ->after(function (): void {
+            $this->resetTable();
 
-              $data['is_system'] = false;
-
-              /*
-               * Percentage dihitung oleh aplikasi.
-               */
-              unset($data['percentage']);
-
-              return $data;
-            }
-          ),
+            $this->dispatch('$refresh');
+          }),
       ])
 
       ->recordActions([
         EditAction::make()
           ->label('Update')
           ->visible(
-            fn(Model $record): bool =>
-              !$record->is_system
-          ),
+            fn(Model $record): bool => !$record->is_system
+          )
+          ->after(function (): void {
+            $this->resetTable();
+
+            $this->dispatch('$refresh');
+          }),
 
         DeleteAction::make()
           ->label('Delete')
           ->visible(
-            fn(Model $record): bool =>
-              !$record->is_system
-          ),
+            fn(Model $record): bool => !$record->is_system
+          )
+          ->after(function (): void {
+            $this->resetTable();
+
+            $this->dispatch('$refresh');
+          }),
       ]);
   }
 }
