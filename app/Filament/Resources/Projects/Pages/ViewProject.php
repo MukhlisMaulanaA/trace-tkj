@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Projects\Pages;
 
 use App\Filament\Resources\Projects\ProjectResource;
 use App\Filament\Resources\Projects\RelationManagers\ProjectProgressRelationManager;
+use App\Filament\Resources\Projects\RelationManagers\ProjectSummaryRelationManager;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -22,6 +23,7 @@ class ViewProject extends ViewRecord
   {
     return [
       ProjectProgressRelationManager::class,
+      ProjectSummaryRelationManager::class,
     ];
   }
 }
