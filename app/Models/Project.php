@@ -26,6 +26,7 @@ class Project extends Model
     'lokasi',
     'nomor_quotation',
     'pic',
+    'project_source',
   ];
 
   /**
@@ -37,6 +38,22 @@ class Project extends Model
     static::creating(function ($project) {
       if (empty($project->id)) {
         $project->id = static::generateCustomId();
+      }
+
+      $user = auth()->user();
+
+      if ($user?->isDistrik8()) {
+        $project->project_source = 'distrik_8';
+      } elseif (empty($project->project_source)) {
+        $project->project_source = 'pusat';
+      }
+    });
+
+    static::updating(function ($project) {
+      $user = auth()->user();
+
+      if ($user?->isDistrik8()) {
+        $project->project_source = 'distrik_8';
       }
     });
 
@@ -78,6 +95,24 @@ class Project extends Model
     }
 
     return $prefixCode . $newSequence;
+  }
+
+  public function scopeAccessibleBy($query, ?User $user = null)
+  {
+    $user ??= auth()->user();
+
+    if (!$user) {
+      return $query->whereRaw('1 = 0');
+    }
+
+    if ($user->isPusat()) {
+      return $query;
+    }
+
+    return $query->where(
+      'project_source',
+      $user->project_scope
+    );
   }
 
   public function progresses(): HasMany

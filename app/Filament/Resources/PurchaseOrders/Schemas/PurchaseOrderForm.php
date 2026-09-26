@@ -14,6 +14,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 
@@ -77,6 +78,8 @@ class PurchaseOrderForm
               ->relationship(
                 name: 'project',
                 titleAttribute: 'id',
+                modifyQueryUsing: fn(Builder $query): Builder =>
+                  $query->accessibleBy(auth()->user()),
               )
               ->getOptionLabelFromRecordUsing(
                 fn(Project $record): string =>
@@ -102,9 +105,17 @@ class PurchaseOrderForm
                   return;
                 }
 
-                $project = Project::find($state);
+                $project = Project::accessibleBy(auth()->user())
+                  ->whereKey($state)
+                  ->first();
 
                 if (!$project) {
+                  $set('project_id', null);
+                  $set('customer', null);
+                  $set('location', null);
+                  $set('quotation_no', null);
+                  $set('pic', null);
+
                   return;
                 }
 
@@ -167,26 +178,6 @@ class PurchaseOrderForm
                   ->columnSpanFull(),
               ]),
           ]),
-
-        /*
-        |--------------------------------------------------------------------------
-        | PAJAK
-        |--------------------------------------------------------------------------
-        */
-
-        // Section::make('Pajak')
-        //   ->description('Pengaturan pajak Purchase Order')
-        //   ->icon('heroicon-o-receipt-percent')
-        //   ->schema([
-        //     \Filament\Forms\Components\Toggle::make('ppn_enabled')
-        //       ->label('Terapkan PPN')
-        //       ->helperText(
-        //         'PPN ditampilkan sebagai 12%, tetapi perhitungan menggunakan 11% dari subtotal.'
-        //       )
-        //       ->default(false)
-        //       ->live(),
-        //   ])
-        //   ->collapsible(),
 
         Section::make('Perhitungan Purchase Order')
           ->description('Pengaturan pajak dan diskon Purchase Order')

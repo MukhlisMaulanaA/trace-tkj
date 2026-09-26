@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PurchaseOrderResource extends Resource
 {
@@ -58,5 +59,11 @@ class PurchaseOrderResource extends Resource
       'view' => ViewPurchaseOrder::route('/{record}'),
       'edit' => EditPurchaseOrder::route('/{record}/edit'),
     ];
+  }
+
+  public static function getEloquentQuery(): Builder
+  {
+    return parent::getEloquentQuery()
+      ->accessibleBy(auth()->user());
   }
 }

@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProjectSummary extends Model
 {
@@ -28,6 +29,28 @@ class ProjectSummary extends Model
       'profit_percentage' => 'decimal:2',
       'nominal_profit' => 'decimal:0',
     ];
+  }
+
+  public function scopeAccessibleBy(
+    Builder $query,
+    ?User $user = null
+  ): Builder {
+    $user ??= auth()->user();
+
+    if (!$user) {
+      return $query->whereRaw('1 = 0');
+    }
+
+    if ($user->isPusat()) {
+      return $query;
+    }
+
+    return $query->whereHas('project', function (Builder $projectQuery) use ($user): void {
+      $projectQuery->where(
+        'project_source',
+        $user->project_scope
+      );
+    });
   }
 
   public function project(): BelongsTo

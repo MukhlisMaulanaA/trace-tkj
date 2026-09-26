@@ -2,21 +2,22 @@
 
 namespace App\Filament\Resources\Projects;
 
-use App\Filament\Resources\Projects\Pages\CreateProject;
-use App\Filament\Resources\Projects\Pages\EditProject;
-use App\Filament\Resources\Projects\Pages\ListProjects;
-use App\Filament\Resources\Projects\Pages\ViewProject;
-use App\Filament\Resources\Projects\RelationManagers\ProjectProgressRelationManager;
-use App\Filament\Resources\Projects\RelationManagers\ProjectSummaryRelationManager;
-use App\Filament\Resources\Projects\Schemas\ProjectForm;
-use App\Filament\Resources\Projects\Schemas\ProjectInfolist;
-use App\Filament\Resources\Projects\Tables\ProjectsTable;
-use App\Models\Project;
 use BackedEnum;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
+use App\Models\Project;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\Projects\Pages\EditProject;
+use App\Filament\Resources\Projects\Pages\ViewProject;
+use App\Filament\Resources\Projects\Pages\ListProjects;
+use App\Filament\Resources\Projects\Pages\CreateProject;
+use App\Filament\Resources\Projects\Schemas\ProjectForm;
+use App\Filament\Resources\Projects\Tables\ProjectsTable;
+use App\Filament\Resources\Projects\Schemas\ProjectInfolist;
+use App\Filament\Resources\Projects\RelationManagers\ProjectSummaryRelationManager;
+use App\Filament\Resources\Projects\RelationManagers\ProjectProgressRelationManager;
 
 class ProjectResource extends Resource
 {
@@ -57,5 +58,11 @@ class ProjectResource extends Resource
       'view' => ViewProject::route('/{record}'),
       'edit' => EditProject::route('/{record}/edit'),
     ];
+  }
+
+  public static function getEloquentQuery(): Builder
+  {
+    return parent::getEloquentQuery()
+      ->accessibleBy(auth()->user());
   }
 }

@@ -8,6 +8,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
 
 class ProjectForm
 {
@@ -34,6 +35,22 @@ class ProjectForm
                   ->placeholder('Masukan nama PIC')
                   ->required()
                   ->maxLength(255),
+
+                Select::make('project_source')
+                  ->label('Sumber Project')
+                  ->options([
+                    'pusat' => 'Kantor Pusat',
+                    'distrik_8' => 'Distrik 8',
+                  ])
+                  ->default('pusat')
+                  ->required()
+                  ->visible(
+                    fn(): bool =>
+                      auth()->user()?->isPusat() ?? false
+                  )
+                  ->helperText(
+                    'User Distrik 8 otomatis menggunakan sumber Distrik 8.'
+                  ),
 
                 TextInput::make('nomor_quotation')
                   ->label('Nomor Quotation')

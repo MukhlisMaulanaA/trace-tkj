@@ -165,36 +165,6 @@ class PurchaseOrder extends Model
     )->orderBy('invoice_date');
   }
 
-  // /*
-  // |--------------------------------------------------------------------------
-  // | TOTAL CALCULATION
-  // |--------------------------------------------------------------------------
-  // */
-
-  // public function calculateTotals(): void
-  // {
-  //   $subtotal = $this->items()->sum('total_price');
-
-  //   /*
-  //    * Client requirement:
-  //    *
-  //    * Display : PPN 12%
-  //    * Calculate: 11%
-  //    */
-
-  //   $ppnAmount = $this->ppn_enabled
-  //     ? round($subtotal * 0.11)
-  //     : 0;
-
-  //   $grandTotal = $subtotal + $ppnAmount;
-
-  //   $this->forceFill([
-  //     'subtotal' => $subtotal,
-  //     'ppn_amount' => $ppnAmount,
-  //     'grand_total' => $grandTotal,
-  //   ])->saveQuietly();
-  // }
-
   /*
   |--------------------------------------------------------------------------
   | STATUS HELPERS
@@ -210,68 +180,6 @@ class PurchaseOrder extends Model
   {
     return $this->status === 'submitted';
   }
-
-  // public function recalculateTotals(): void
-  // {
-  //   $subtotal = (float) ($this->subtotal ?? 0);
-
-  //   /*
-  //   |--------------------------------------------------------------------------
-  //   | PPN
-  //   |--------------------------------------------------------------------------
-  //   | Display : 12%
-  //   | Actual  : 11%
-  //   |--------------------------------------------------------------------------
-  //   */
-
-  //   $ppnAmount = 0;
-
-  //   if ($this->ppn_enabled) {
-  //     $ppnAmount = round($subtotal * 0.11);
-  //   }
-
-  //   /*
-  //   |--------------------------------------------------------------------------
-  //   | TOTAL SETELAH PPN
-  //   |--------------------------------------------------------------------------
-  //   */
-
-  //   $totalAfterPpn = $subtotal + $ppnAmount;
-
-  //   /*
-  //   |--------------------------------------------------------------------------
-  //   | DISCOUNT
-  //   |--------------------------------------------------------------------------
-  //   */
-
-  //   $discountAmount = 0;
-
-  //   if ($this->discount_enabled) {
-  //     $discountPercent = max(
-  //       0,
-  //       min(100, (float) ($this->discount_percent ?? 0))
-  //     );
-
-  //     $discountAmount = round(
-  //       $totalAfterPpn * ($discountPercent / 100)
-  //     );
-  //   }
-
-  //   /*
-  //   |--------------------------------------------------------------------------
-  //   | GRAND TOTAL
-  //   |--------------------------------------------------------------------------
-  //   */
-
-  //   $grandTotal = max(
-  //     0,
-  //     $totalAfterPpn - $discountAmount
-  //   );
-
-  //   $this->ppn_amount = $ppnAmount;
-  //   $this->discount_amount = $discountAmount;
-  //   $this->grand_total = $grandTotal;
-  // }
 
   public function calculateTotals(): void
   {
@@ -440,5 +348,25 @@ class PurchaseOrder extends Model
       'ppn_amount' => $ppnAmount,
       'grand_total' => $grandTotal,
     ])->saveQuietly();
+  }
+
+  public function scopeAccessibleBy($query, ?User $user = null)
+  {
+    $user ??= auth()->user();
+
+    if (!$user) {
+      return $query->whereRaw('1 = 0');
+    }
+
+    if ($user->isPusat()) {
+      return $query;
+    }
+
+    return $query->whereHas('project', function ($query) use ($user) {
+      $query->where(
+        'project_source',
+        $user->project_scope
+      );
+    });
   }
 }
