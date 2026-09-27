@@ -96,6 +96,48 @@ class ProjectSummary extends Model
     return $this->contract_value + $this->pph_amount;
   }
 
+  public function syncProfitValues(): void
+  {
+    $finalContractValue = (float) $this->final_contract_value;
+
+    if ($finalContractValue <= 0) {
+      $this->profit_percentage = 0;
+      $this->nominal_profit = 0;
+
+      return;
+    }
+
+    if ($this->profit_mode === self::PROFIT_MODE_NOMINAL) {
+      $nominalProfit = max(
+        0,
+        (float) ($this->nominal_profit ?? 0)
+      );
+
+      $profitPercentage = round(
+        ($nominalProfit / $finalContractValue) * 100,
+        2
+      );
+
+      $this->nominal_profit = round($nominalProfit, 0);
+      $this->profit_percentage = $profitPercentage;
+
+      return;
+    }
+
+    $profitPercentage = max(
+      0,
+      min(100, (float) ($this->profit_percentage ?? 0))
+    );
+
+    $nominalProfit = round(
+      $finalContractValue * ($profitPercentage / 100),
+      0
+    );
+
+    $this->profit_percentage = $profitPercentage;
+    $this->nominal_profit = $nominalProfit;
+  }
+
   public function getMaterialExpenditureAttribute(): float
   {
     return round((float) $this->expenditures()->where('type', ProjectExpenditure::TYPE_MATERIAL)->sum('amount'), 0);

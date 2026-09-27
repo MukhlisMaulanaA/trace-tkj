@@ -57,19 +57,66 @@ class ViewProjectSummary extends ViewRecord
             ProjectSummary::PROFIT_MODE_NOMINAL,
           ]),
         ],
-        'profit_percentage' => ['required_if:profit_mode,percentage', 'numeric', 'min:0', 'max:100'],
-        'nominal_profit' => ['required_if:profit_mode,nominal', 'numeric', 'min:0'],
+        'profit_percentage' => [
+          'required_if:profit_mode,percentage',
+          'numeric',
+          'min:0',
+          'max:100',
+        ],
+        'nominal_profit' => [
+          'required_if:profit_mode,nominal',
+          'numeric',
+          'min:0',
+        ],
       ],
     )->validate();
 
-    $this->getRecord()->update([
-      'profit_mode' => $validatedProfit['profit_mode'],
-      'profit_percentage' => $validatedProfit['profit_percentage'] ?? 0,
-      'nominal_profit' => $validatedProfit['nominal_profit'] ?? 0,
-    ]);
+    $record = $this->getRecord();
 
-    $this->record = $this->getRecord()->fresh();
+    $record->profit_mode = $validatedProfit['profit_mode'];
+
+    if ($validatedProfit['profit_mode'] === ProjectSummary::PROFIT_MODE_NOMINAL) {
+      $record->nominal_profit = max(
+        0,
+        (float) ($validatedProfit['nominal_profit'] ?? 0)
+      );
+
+      $record->syncProfitValues();
+    } else {
+      $record->profit_percentage = max(
+        0,
+        min(100, (float) ($validatedProfit['profit_percentage'] ?? 0))
+      );
+
+      $record->syncProfitValues();
+    }
+
+    $record->save();
+
+    $this->record = $record->fresh();
+
     $this->resetProfitDraft();
+  }
+
+  public function getDraftCalculatedPercentageProperty(): float
+  {
+    $finalContractValue = (float) $this->getRecord()->final_contract_value;
+
+    if ($finalContractValue <= 0) {
+      return 0;
+    }
+
+    if ($this->draftProfitMode === ProjectSummary::PROFIT_MODE_NOMINAL) {
+      return round(
+        ((float) ($this->draftNominalProfit ?? 0) / $finalContractValue) * 100,
+        2
+      );
+    }
+
+    return round(
+      (float) ($this->draftProfitPercentage ?? 0),
+      2
+    );
   }
 
   public function getDraftFinalProfitProperty(): float
