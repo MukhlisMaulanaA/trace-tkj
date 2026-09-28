@@ -97,6 +97,17 @@ class TraceDashboard extends Dashboard
       $project->id => $project->progresses->sortByDesc('waktu_progres')->first(),
     ]);
 
+    $attention = $summaries->filter(fn(ProjectSummary $summary) => $summary->remaining_budget < 0)
+      ->map(fn(ProjectSummary $summary) => [
+        'severity' => 'CRITICAL',
+        'title' => $summary->project_name ?: $summary->project_id,
+        'detail' => 'Sisa Budget project bernilai negatif.',
+        'url' => ProjectSummaryResource::getUrl('view', ['record' => $summary]),
+      ])
+      ->concat($this->stalePurchaseOrderAttention($purchaseOrders))
+      ->values()
+      ->take(5);
+
     return [
       'sourceLabel' => $this->sourceOptions()[$source] ?? 'Semua Sumber',
       'periodLabel' => $this->periodOptions()[$this->period] ?? 'Bulan ini',
@@ -122,13 +133,7 @@ class TraceDashboard extends Dashboard
         'Material' => $this->money($expenditures->where('type', ProjectExpenditure::TYPE_MATERIAL)->sum('amount')),
         'Labour' => $this->money($expenditures->where('type', ProjectExpenditure::TYPE_LABOUR)->sum('amount')),
       ],
-      'attention' => $summaries->filter(fn(ProjectSummary $summary) => $summary->remaining_budget < 0)
-        ->map(fn(ProjectSummary $summary) => [
-          'severity' => 'CRITICAL',
-          'title' => $summary->project_name ?: $summary->project_id,
-          'detail' => 'Sisa Budget project bernilai negatif.',
-          'url' => ProjectSummaryResource::getUrl('view', ['record' => $summary]),
-        ])->values()->take(5),
+      'attention' => $attention,
       'recentProjects' => $recentProjects->map(fn(Project $project) => [
         'label' => 'Project dibuat',
         'title' => $project->nama_project,
@@ -165,6 +170,38 @@ class TraceDashboard extends Dashboard
   private function inPeriod(null|Carbon|string $date, array $period): bool
   {
     return $date !== null && Carbon::parse($date)->betweenIncluded($period[0], $period[1]);
+  }
+
+  private function stalePurchaseOrderAttention(Collection $purchaseOrders): Collection
+  {
+    $staleSince = now()->subMonth();
+
+    return $purchaseOrders
+      ->filter(function (PurchaseOrder $purchaseOrder) use ($staleSince): bool {
+        $invoiceTotal = (float) $purchaseOrder->progresses->sum('amount');
+        $grandTotal = (float) $purchaseOrder->grand_total;
+
+        if ($grandTotal > 0 && $invoiceTotal >= $grandTotal) {
+          return false;
+        }
+
+        $lastProgress = $purchaseOrder->progresses->sortByDesc('invoice_date')->first();
+        $lastActivity = $lastProgress?->invoice_date ?? $purchaseOrder->po_date;
+
+        return $lastActivity !== null && Carbon::parse($lastActivity)->lte($staleSince);
+      })
+      ->map(function (PurchaseOrder $purchaseOrder): array {
+        $hasProgress = $purchaseOrder->progresses->isNotEmpty();
+
+        return [
+          'severity' => 'WARNING',
+          'title' => $purchaseOrder->po_number,
+          'detail' => $hasProgress
+            ? 'Tidak ada invoice atau progress PO selama lebih dari 1 bulan.'
+            : 'Belum ada invoice atau progress PO selama lebih dari 1 bulan.',
+          'url' => PurchaseOrderResource::getUrl('view', ['record' => $purchaseOrder]),
+        ];
+      });
   }
 
   private function money(float|int|string $amount): string

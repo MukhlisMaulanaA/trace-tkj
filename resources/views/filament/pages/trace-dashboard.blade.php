@@ -87,7 +87,7 @@
               <p class="mt-1 font-semibold tabular-nums text-gray-950 dark:text-white">{{ $value }}</p>
             </div>
           @endforeach
-        </div>
+        </div>  
       </section>
     </div>
 

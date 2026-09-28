@@ -61,11 +61,7 @@ class ProjectExpendituresRelationManager extends RelationManager
             ->label('Nilai Pengeluaran')
             ->prefix('Rp')
             ->placeholder('0')
-            ->mask(RawJs::make(<<<'JS'
-                        $input
-                            .replace(/\D/g, '')
-                            .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                    JS))
+            ->mask(RawJs::make('$money($input)'))
             ->stripCharacters(',')
             ->numeric()
             ->minValue(0)
@@ -81,13 +77,38 @@ class ProjectExpendituresRelationManager extends RelationManager
   {
     return $table
       ->columns([
-        TextColumn::make('type')->badge(),
-        TextColumn::make('description')->searchable(),
-        TextColumn::make('amount')->money('IDR', 0),
-        TextColumn::make('expenditure_date')->date(),
+        TextColumn::make('type')
+          ->label('Jenis')
+          ->badge()
+          ->sortable(),
+
+        TextColumn::make('description')
+          ->label('Deskripsi')
+          ->searchable()
+          ->sortable()
+          ->wrap(),
+
+        TextColumn::make('amount')
+          ->label('Nilai Pengeluaran')
+          ->formatStateUsing(
+            fn($state): string =>
+              'Rp ' . number_format((float) $state, 0, ',', '.')
+          )
+          ->sortable()
+          ->alignRight(),
+
+        TextColumn::make('expenditure_date')
+          ->label('Tanggal Pengeluaran')
+          ->date('d M Y')
+          ->sortable(),
       ])
       ->defaultSort('expenditure_date', 'desc')
-      ->headerActions([CreateAction::make()])
-      ->recordActions([EditAction::make(), DeleteAction::make()]);
+      ->headerActions([
+        CreateAction::make(),
+      ])
+      ->recordActions([
+        EditAction::make(),
+        DeleteAction::make(),
+      ]);
   }
 }
