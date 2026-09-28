@@ -30,8 +30,8 @@ class ProjectExpendituresRelationManager extends RelationManager
   public function form(Schema $schema): Schema
   {
     return $schema->components([
-      Section::make('Expenditure Details')
-        ->description('Enter the expenditure information below.')
+      Section::make('Detail Pengeluaran')
+        ->description('Masukan info pengeluaran di bawah ini.')
         ->icon('heroicon-o-receipt-percent')
         ->schema([
           Select::make('type')
@@ -45,7 +45,7 @@ class ProjectExpendituresRelationManager extends RelationManager
             ->helperText('Choose whether this expense is Material or Labour.'),
 
           DatePicker::make('expenditure_date')
-            ->label('Expenditure Date')
+            ->label('Tanggal Pengeluaran')
             ->required()
             ->default(now())
             ->native(false),
@@ -58,7 +58,7 @@ class ProjectExpendituresRelationManager extends RelationManager
             ->columnSpanFull(),
 
           TextInput::make('amount')
-            ->label('Expenditure Amount')
+            ->label('Nilai Pengeluaran')
             ->prefix('Rp')
             ->placeholder('0')
             ->mask(RawJs::make(<<<'JS'

@@ -103,7 +103,7 @@ class TraceDashboard extends Dashboard
       ],
       'financial' => [
         'PO / Commitment' => $this->money($purchaseOrders->sum('grand_total')),
-        'Expenditure' => $this->money($expenditures->sum('amount')),
+        'Pengeluaran' => $this->money($expenditures->sum('amount')),
         'Remaining Budget' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->remaining_budget)),
         'Balance' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->balance)),
       ],
@@ -112,16 +112,16 @@ class TraceDashboard extends Dashboard
         'Invoice / PO progress' => $invoiceProgresses->count(),
         'Invoice value' => $this->money($invoiceProgresses->sum('amount')),
         'Invoice percentage' => number_format($invoiceProgresses->sum('percentage'), 2) . '%',
-      ],
+      ],  
       'expenditure' => [
         'Material' => $this->money($expenditures->where('type', ProjectExpenditure::TYPE_MATERIAL)->sum('amount')),
         'Labour' => $this->money($expenditures->where('type', ProjectExpenditure::TYPE_LABOUR)->sum('amount')),
       ],
-      'attention' => $summaries->filter(fn(ProjectSummary $summary) => $summary->balance < 0)
+      'attention' => $summaries->filter(fn(ProjectSummary $summary) => $summary->remaining_budget < 0)
         ->map(fn(ProjectSummary $summary) => [
           'severity' => 'CRITICAL',
           'title' => $summary->project_name ?: $summary->project_id,
-          'detail' => 'Balance project bernilai negatif.',
+          'detail' => 'Sisa Budget project bernilai negatif.',
           'url' => ProjectSummaryResource::getUrl('view', ['record' => $summary]),
         ])->values()->take(5),
       'recentProjects' => $recentProjects->map(fn(Project $project) => [

@@ -77,7 +77,7 @@
       </section>
       <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <h2 class="text-base font-semibold text-gray-950 dark:text-white">
-          Progress & expenditure
+          Progress & Pengeluaran
           <span class="font-normal text-gray-500 dark:text-gray-400">({{ $data['periodLabel'] }})</span>
         </h2>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">

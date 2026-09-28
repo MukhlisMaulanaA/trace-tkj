@@ -64,7 +64,7 @@
             {{ $formatCurrency($record->final_contract_value) }}</p>
         </div>
         <div class="rounded-lg border border-gray-200 p-4 dark:border-white/10">
-          <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">M + L Expenditure</p>
+          <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">M + L Pengeluaran</p>
           <p class="mt-2 text-lg font-bold text-gray-950 dark:text-white">{{ $formatCurrency($record->ml_expenditure) }}
           </p>
         </div>
@@ -84,7 +84,7 @@
           <div
             class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-white/10 sm:px-6">
             <div>
-              <h3 class="font-bold text-gray-950 dark:text-white">Material Expenditure</h3>
+              <h3 class="font-bold text-gray-950 dark:text-white">Pengeluaran Material</h3>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $materialExpenditures->count() }} entries</p>
             </div>
             <span
@@ -113,7 +113,7 @@
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="4" class="px-5 py-8 text-center text-gray-500">No material expenditure recorded.
+                    <td colspan="4" class="px-5 py-8 text-center text-gray-500">Belum ada pengeluaran Material.
                     </td>
                   </tr>
                 @endforelse
@@ -127,7 +127,7 @@
           <div
             class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-white/10 sm:px-6">
             <div>
-              <h3 class="font-bold text-gray-950 dark:text-white">Labour Expenditure</h3>
+              <h3 class="font-bold text-gray-950 dark:text-white">Pengeluaran Labour</h3>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $labourExpenditures->count() }} entries</p>
             </div>
             <span
@@ -156,7 +156,7 @@
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="4" class="px-5 py-8 text-center text-gray-500">No labour expenditure recorded.</td>
+                    <td colspan="4" class="px-5 py-8 text-center text-gray-500">Belum ada pengeluaran Labour</td>
                   </tr>
                 @endforelse
               </tbody>
@@ -311,7 +311,7 @@
           <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Balance</p>
           <p class="mt-2 text-2xl font-bold text-gray-950 dark:text-white">
             {{ $formatCurrency($isEditingProfit ? $this->draftBalance : $record->balance) }}</p>
-          <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Final profit + remaining budget + M + L expenditure.
+          <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Final profit + remaining budget + M + L Pengeluaran.
           </p>
         </div>
       </aside>
@@ -319,7 +319,7 @@
 
     <div
       class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600 dark:border-white/15 dark:bg-white/3 dark:text-gray-300">
-      Use the expenditure table below to add or edit material and labour costs directly from this summary.
+      Use the Tabel Pengeluaran below to add or edit material and labour costs directly from this summary.
     </div>
   </div>
 
