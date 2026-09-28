@@ -49,7 +49,7 @@ class UserForm
           ->password()
           ->default('Trace_TKJ123')
           ->dehydrateStateUsing(fn(string $state): string => Hash::make($state))
-          ->dehydrated(fn(?string $state): bool => filled($state))
+          ->dehydrated(true) // Perubahan penting: Pastikan nilai password tetap terisi & terkirim ke DB
           ->hidden(),
       ]);
   }
