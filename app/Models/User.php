@@ -4,11 +4,12 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 #[Fillable([
   'name',
@@ -45,5 +46,14 @@ class User extends Authenticatable
   public function isDistrik8(): bool
   {
     return $this->project_scope === 'distrik_8';
+  }
+
+  protected static function booted(): void
+  {
+    static::creating(function ($user) {
+      if (empty($user->password)) {
+        $user->password = Hash::make('Trace_TKJ123');
+      }
+    });
   }
 }
