@@ -86,6 +86,11 @@ class TraceDashboard extends Dashboard
     $invoiceProgresses = $purchaseOrders->flatMap(fn(PurchaseOrder $order) => $order->progresses)
       ->filter(fn(PurchaseOrderProgress $progress) => $this->inPeriod($progress->invoice_date, $period))
       ->sortByDesc('invoice_date');
+    $invoiceValue = (float) $invoiceProgresses->sum('amount');
+    $commitmentValue = (float) $purchaseOrders->sum('grand_total');
+    $invoicePercentage = $commitmentValue > 0
+      ? ($invoiceValue / $commitmentValue) * 100
+      : 0;
     $expenditures = $summaries->flatMap(fn(ProjectSummary $summary) => $summary->expenditures)
       ->filter(fn(ProjectExpenditure $expenditure) => $this->inPeriod($expenditure->expenditure_date, $period));
     $latestProgressByProject = $projects->mapWithKeys(fn(Project $project) => [
@@ -102,7 +107,7 @@ class TraceDashboard extends Dashboard
         ['label' => 'Final Profit', 'value' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit)), 'tone' => 'emerald', 'url' => ProjectSummaryResource::getUrl('index')],
       ],
       'financial' => [
-        'PO / Commitment' => $this->money($purchaseOrders->sum('grand_total')),
+        'PO / Commitment' => $this->money($commitmentValue),
         'Pengeluaran' => $this->money($expenditures->sum('amount')),
         'Remaining Budget' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->remaining_budget)),
         'Balance' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->balance)),
@@ -110,8 +115,8 @@ class TraceDashboard extends Dashboard
       'progress' => [
         'Project progress' => $progresses->count(),
         'Invoice / PO progress' => $invoiceProgresses->count(),
-        'Invoice value' => $this->money($invoiceProgresses->sum('amount')),
-        'Invoice percentage' => number_format($invoiceProgresses->sum('percentage'), 2) . '%',
+        'Invoice value' => $this->money($invoiceValue),
+        'Invoice percentage' => number_format($invoicePercentage, 2) . '%',
       ],  
       'expenditure' => [
         'Material' => $this->money($expenditures->where('type', ProjectExpenditure::TYPE_MATERIAL)->sum('amount')),
