@@ -6,7 +6,7 @@
       class="flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p class="text-sm font-medium text-primary-600 dark:text-primary-400">TRACE TKJ</p>
-        <h1 class="mt-0.5 text-2xl font-bold tracking-tight text-gray-950 dark:text-white">Executive monitoring</h1>
+        <h1 class="mt-0.5 text-2xl font-bold tracking-tight text-gray-950 dark:text-white">Monitoring Project</h1>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pantau project, PO, progress, dan kondisi finansial.
         </p>
       </div>
@@ -94,7 +94,7 @@
     {{-- Attention required --}}
     <section class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-        <h2 class="text-base font-semibold text-gray-950 dark:text-white">Attention required</h2>
+        <h2 class="text-base font-semibold text-gray-950 dark:text-white">Perlu Perhaitan</h2>
       </div>
       <div class="divide-y divide-gray-100 dark:divide-gray-800">
         @forelse ($data['attention'] as $item)
@@ -117,17 +117,17 @@
 
     {{-- Recent projects + orders --}}
     <div class="grid gap-6 xl:grid-cols-2">
-      <section class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <section class="min-w-0 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <h2
           class="border-b border-gray-200 px-5 py-4 text-base font-semibold text-gray-950 dark:border-gray-800 dark:text-white">
-          Recent projects</h2>
+          Project Terbaru</h2>
         <div class="divide-y divide-gray-100 dark:divide-gray-800">
           @forelse ($data['recentProjects'] as $item)
             <a href="{{ $item['url'] }}"
-              class="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:hover:bg-gray-800">
+              class="flex min-w-0 items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:hover:bg-gray-800">
               <div class="min-w-0">
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ $item['label'] }} · {{ $item['date'] }}</p>
-                <p class="mt-1 truncate font-medium text-gray-950 dark:text-white">{{ $item['title'] }}</p>
+                <p class="mt-1 wrap-break-word font-medium text-gray-950 dark:text-white">{{ $item['title'] }}</p>
               </div>
               <span class="shrink-0 text-sm font-semibold text-primary-600 dark:text-primary-400">View</span>
             </a>
@@ -136,17 +136,17 @@
           @endforelse
         </div>
       </section>
-      <section class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <section class="min-w-0 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <h2
           class="border-b border-gray-200 px-5 py-4 text-base font-semibold text-gray-950 dark:border-gray-800 dark:text-white">
-          Recent purchase orders</h2>
+          Purchase Order Terbaru</h2>
         <div class="divide-y divide-gray-100 dark:divide-gray-800">
           @forelse ($data['recentOrders'] as $item)
             <a href="{{ $item['url'] }}"
-              class="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:hover:bg-gray-800">
+              class="flex min-w-0 items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:hover:bg-gray-800">
               <div class="min-w-0">
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ $item['label'] }} · {{ $item['date'] }}</p>
-                <p class="mt-1 truncate font-medium text-gray-950 dark:text-white">{{ $item['title'] }}</p>
+                <p class="mt-1 wrap-break-word font-medium text-gray-950 dark:text-white">{{ $item['title'] }}</p>
               </div>
               <span class="shrink-0 text-sm font-semibold text-primary-600 dark:text-primary-400">View</span>
             </a>

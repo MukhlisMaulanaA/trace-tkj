@@ -22,8 +22,7 @@
       <div class="border-b border-gray-200 bg-gray-50 px-5 py-4 dark:border-white/10 dark:bg-white/3 sm:px-8">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-400">Project
-              Summary</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600 dark:text-primary-400">Rekapitulasi Project</p>
             <h2 class="mt-1 text-xl font-bold tracking-tight text-gray-950 dark:text-white sm:text-2xl">
               {{ $record->project_name }}</h2>
           </div>
@@ -53,24 +52,24 @@
 
       <div class="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 sm:p-8">
         <div class="rounded-lg border border-gray-200 p-4 dark:border-white/10">
-          <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Contract Value</p>
+          <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Nilai Kontrak</p>
           <p class="mt-2 text-lg font-bold text-gray-950 dark:text-white">{{ $formatCurrency($record->contract_value) }}
           </p>
         </div>
         <div
           class="rounded-lg border border-primary-200 bg-primary-50 p-4 dark:border-primary-500/30 dark:bg-primary-500/10">
-          <p class="text-xs font-semibold uppercase text-primary-700 dark:text-primary-300">Final Contract Value</p>
+          <p class="text-xs font-semibold uppercase text-primary-700 dark:text-primary-300">Final Kontrak</p>
           <p class="mt-2 text-lg font-bold text-primary-900 dark:text-primary-100">
             {{ $formatCurrency($record->final_contract_value) }}</p>
         </div>
         <div class="rounded-lg border border-gray-200 p-4 dark:border-white/10">
-          <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">M + L Pengeluaran</p>
+          <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Pengeluaran M + L</p>
           <p class="mt-2 text-lg font-bold text-gray-950 dark:text-white">{{ $formatCurrency($record->ml_expenditure) }}
           </p>
         </div>
         <div
           class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-          <p class="text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">Remaining Budget</p>
+          <p class="text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">Sisa Budget</p>
           <p class="mt-2 text-lg font-bold text-emerald-900 dark:text-emerald-100">
             {{ $formatCurrency($isEditingProfit ? $this->draftRemainingBudget : $record->remaining_budget) }}</p>
         </div>
@@ -78,9 +77,9 @@
     </section>
 
     <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-      <div class="space-y-6">
+      <div class="min-w-0 space-y-6">
         <div
-          class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
+          class="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
           <div
             class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-white/10 sm:px-6">
             <div>
@@ -90,14 +89,14 @@
             <span
               class="font-bold text-gray-950 dark:text-white">{{ $formatCurrency($record->material_expenditure) }}</span>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full min-w-150 text-left text-sm">
+          <div class="max-w-full overflow-x-auto overscroll-x-contain">
+            <table class="w-full min-w-[37.5rem] text-left text-sm">
               <thead class="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-white/3 dark:text-gray-400">
                 <tr>
                   <th class="px-5 py-3 font-semibold">No.</th>
                   <th class="px-5 py-3 font-semibold">Material</th>
-                  <th class="px-5 py-3 font-semibold">Value</th>
-                  <th class="px-5 py-3 font-semibold">Purchase Date</th>
+                  <th class="px-5 py-3 font-semibold">Nilai</th>
+                  <th class="px-5 py-3 font-semibold">Tanggal</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-white/5">
@@ -123,7 +122,7 @@
         </div>
 
         <div
-          class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
+          class="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
           <div
             class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-white/10 sm:px-6">
             <div>
@@ -133,14 +132,14 @@
             <span
               class="font-bold text-gray-950 dark:text-white">{{ $formatCurrency($record->labour_expenditure) }}</span>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full min-w-150 text-left text-sm">
+          <div class="max-w-full overflow-x-auto overscroll-x-contain">
+            <table class="w-full min-w-[37.5rem] text-left text-sm">
               <thead class="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-white/3 dark:text-gray-400">
                 <tr>
                   <th class="px-5 py-3 font-semibold">No.</th>
                   <th class="px-5 py-3 font-semibold">Labour</th>
-                  <th class="px-5 py-3 font-semibold">Value</th>
-                  <th class="px-5 py-3 font-semibold">Period</th>
+                  <th class="px-5 py-3 font-semibold">Nilai</th>
+                  <th class="px-5 py-3 font-semibold">Periode</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-white/5">
@@ -173,7 +172,7 @@
             <p class="mt-3 text-3xl font-bold text-orange-950 dark:text-orange-100">
               {{ number_format((float) $record->profit_percentage, 2) }}%</p>
             <div class="mt-4 border-t border-orange-200 pt-4 dark:border-orange-500/20">
-              <p class="text-xs font-semibold uppercase text-orange-700 dark:text-orange-300">Final Profit Amount</p>
+              <p class="text-xs font-semibold uppercase text-orange-700 dark:text-orange-300">Final Profit</p>
               <p class="mt-1 text-xl font-bold text-orange-950 dark:text-orange-100">
                 {{ $formatCurrency($record->final_profit) }}</p>
             </div>
@@ -198,7 +197,7 @@
 
                 <select wire:model.live="draftProfitMode"
                   class="mt-1 block w-full rounded-lg border-orange-300 bg-white text-sm shadow-sm focus:border-orange-500 focus:ring-orange-500 dark:border-orange-500/40 dark:bg-gray-950 dark:text-white">
-                  <option value="percentage">Percentage</option>
+                  <option value="percentage">Persentase</option>
                   <option value="nominal">Nominal</option>
                 </select>
               </label>
@@ -206,7 +205,7 @@
               {{-- Profit Percentage --}}
               <label class="block">
                 <span class="text-sm font-semibold text-orange-900 dark:text-orange-100">
-                  Profit Percentage
+                  Persentase Profit
                 </span>
 
                 @if ($draftProfitMode === 'nominal')
@@ -277,7 +276,7 @@
               </p>
 
               <p class="mt-3 text-xs font-semibold uppercase text-orange-700 dark:text-orange-300">
-                Final Profit Amount
+                Final Profit
               </p>
 
               <p class="mt-1 text-xl font-bold text-orange-950 dark:text-orange-100">
@@ -311,7 +310,7 @@
           <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Balance</p>
           <p class="mt-2 text-2xl font-bold text-gray-950 dark:text-white">
             {{ $formatCurrency($isEditingProfit ? $this->draftBalance : $record->balance) }}</p>
-          <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Final profit + remaining budget + M + L Pengeluaran.
+          <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Final profit + Sisa Budget + Pengeluaran M + L.
           </p>
         </div>
       </aside>

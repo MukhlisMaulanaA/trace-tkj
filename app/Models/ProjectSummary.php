@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,12 +10,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProjectSummary extends Model
-{
+{ 
   use HasFactory;
 
   public const PROFIT_MODE_PERCENTAGE = 'percentage';
   public const PROFIT_MODE_NOMINAL = 'nominal';
-  public const PPH_RATE = 0.0265;
+  // public const PPH_RATE = 0.0265;
+  public const PPH_RATE = 0.0200;
 
   protected $fillable = [
     'project_id',
@@ -35,7 +37,7 @@ class ProjectSummary extends Model
     Builder $query,
     ?User $user = null
   ): Builder {
-    $user ??= auth()->user();
+    $user ??= Auth::user();
 
     if (!$user) {
       return $query->whereRaw('1 = 0');
@@ -93,7 +95,7 @@ class ProjectSummary extends Model
 
   public function getFinalContractValueAttribute(): float
   {
-    return $this->contract_value + $this->pph_amount;
+    return $this->contract_value - $this->pph_amount;
   }
 
   public function syncProfitValues(): void

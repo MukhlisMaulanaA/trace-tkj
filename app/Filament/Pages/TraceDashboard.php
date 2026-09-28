@@ -103,20 +103,20 @@ class TraceDashboard extends Dashboard
       'kpis' => [
         ['label' => 'Total Project', 'value' => number_format($projects->count()), 'tone' => 'blue', 'url' => ProjectResource::getUrl('index')],
         ['label' => 'Total Purchase Order', 'value' => number_format($purchaseOrders->count()), 'tone' => 'indigo', 'url' => PurchaseOrderResource::getUrl('index')],
-        ['label' => 'Contract Value', 'value' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->contract_value)), 'tone' => 'amber', 'url' => ProjectSummaryResource::getUrl('index')],
+        ['label' => 'Total Nilai PO', 'value' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->contract_value)), 'tone' => 'amber', 'url' => ProjectSummaryResource::getUrl('index')],
         ['label' => 'Final Profit', 'value' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit)), 'tone' => 'emerald', 'url' => ProjectSummaryResource::getUrl('index')],
       ],
       'financial' => [
-        'PO / Commitment' => $this->money($commitmentValue),
+        'Total Nilai PO' => $this->money($commitmentValue),
         'Pengeluaran' => $this->money($expenditures->sum('amount')),
-        'Remaining Budget' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->remaining_budget)),
+        'Sisa Budget' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->remaining_budget)),
         'Balance' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->balance)),
       ],
       'progress' => [
         'Project progress' => $progresses->count(),
         'Invoice / PO progress' => $invoiceProgresses->count(),
-        'Invoice value' => $this->money($invoiceValue),
-        'Invoice percentage' => number_format($invoicePercentage, 2) . '%',
+        'Total Nilai Invoice' => $this->money($invoiceValue),
+        'Persentase Invoice' => number_format($invoicePercentage, 2) . '%',
       ],  
       'expenditure' => [
         'Material' => $this->money($expenditures->where('type', ProjectExpenditure::TYPE_MATERIAL)->sum('amount')),
