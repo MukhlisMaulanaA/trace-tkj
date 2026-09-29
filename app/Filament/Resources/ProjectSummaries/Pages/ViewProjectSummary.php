@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProjectSummaries\Pages;
 
 use App\Filament\Resources\ProjectSummaries\ProjectSummaryResource;
 use App\Models\ProjectSummary;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Validation\Rule;
@@ -155,6 +156,15 @@ class ViewProjectSummary extends ViewRecord
 
   protected function getHeaderActions(): array
   {
-    return [EditAction::make()];
+    return [
+      Action::make('document')
+        ->label('Dokumen Rekap')
+        ->icon('heroicon-o-document-text')
+        ->color('success')
+        ->url(fn(ProjectSummary $record): string => route('project-summaries.document', $record))
+        ->openUrlInNewTab(),
+
+      EditAction::make(),
+    ];
   }
 }
