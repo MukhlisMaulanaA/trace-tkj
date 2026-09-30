@@ -11,6 +11,7 @@
       ->where('type', \App\Models\ProjectExpenditure::TYPE_LABOUR)
       ->orderBy('expenditure_date')
       ->get();
+    $purchaseOrders = $project?->purchaseOrders()->orderBy('po_number')->get() ?? collect();
   $formatCurrency = static fn(float|int|null $amount): string => 'Rp' .
       number_format((float) ($amount ?? 0), 0, '.', ',');
 @endphp
@@ -38,7 +39,20 @@
         </div>
         <div class="bg-white px-5 py-4 dark:bg-gray-900">
           <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">PO Number</p>
-          <p class="mt-1 font-semibold text-gray-950 dark:text-white">{{ $record->po_numbers ?: '-' }}</p>
+          <p class="mt-1 font-semibold text-gray-950 dark:text-white">
+            @forelse ($purchaseOrders as $purchaseOrder)
+              <a
+                {{-- href="{{ filled($purchaseOrder->pdf_file) ? Storage::disk('public')->url($purchaseOrder->pdf_file) : route('purchase-orders.document', $purchaseOrder) }}" --}}
+                href="{{ \App\Filament\Resources\PurchaseOrders\PurchaseOrderResource::getUrl('view', ['record' => $purchaseOrder]) }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary-600 underline decoration-primary-300 underline-offset-2 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                {{ $purchaseOrder->po_number }}
+              </a>@if (!$loop->last), @endif
+            @empty
+              -
+            @endforelse
+          </p>
         </div>
         <div class="bg-white px-5 py-4 dark:bg-gray-900">
           <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Owner / Customer</p>
