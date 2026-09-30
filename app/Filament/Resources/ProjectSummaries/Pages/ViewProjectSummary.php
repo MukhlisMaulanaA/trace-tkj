@@ -158,8 +158,8 @@ class ViewProjectSummary extends ViewRecord
   {
     return [
       Action::make('document')
-        ->label('Dokumen Rekap')
-        ->icon('heroicon-o-document-text')
+        ->label('Export Excel')
+        ->icon('heroicon-o-arrow-down-tray')
         ->color('success')
         ->url(fn(ProjectSummary $record): string => route('project-summaries.document', $record))
         ->openUrlInNewTab(),

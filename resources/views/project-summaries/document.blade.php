@@ -359,7 +359,7 @@
       .document {
         width: auto;
         min-height: auto;
-        margin: 0;
+        margin: 0;  
         padding: 8mm;
         box-shadow: none;
       }

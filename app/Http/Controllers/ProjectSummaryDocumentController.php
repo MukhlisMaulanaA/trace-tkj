@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProjectSummaryExport;
 use App\Models\ProjectSummary;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProjectSummaryDocumentController extends Controller
 {
-  public function show(ProjectSummary $projectSummary): View
+  public function show(ProjectSummary $projectSummary): BinaryFileResponse
   {
     Gate::authorize('view', $projectSummary);
 
-    $projectSummary->load('project');
+    $export = new ProjectSummaryExport($projectSummary);
+    $temporaryFile = $export->download();
 
-    return view(
-      'project-summaries.document',
-      [
-        'record' => $projectSummary,
-      ]
-    );
+    return response()->download(
+      $temporaryFile,
+      $export->filename(),
+      ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+    )->deleteFileAfterSend(true);
   }
 }
