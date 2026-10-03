@@ -17,6 +17,7 @@ use App\Filament\Resources\ProjectSummaries\Pages\ViewProjectSummary;
 use App\Filament\Resources\ProjectSummaries\Pages\ListProjectSummaries;
 use App\Filament\Resources\ProjectSummaries\RelationManagers\ProjectExpendituresRelationManager;
 use Filament\Tables\Filters\SelectFilter;
+use UnitEnum;
 
 class ProjectSummaryResource extends Resource
 {
@@ -25,6 +26,8 @@ class ProjectSummaryResource extends Resource
   protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalculator;
 
   protected static ?string $navigationLabel = 'Project Summaries';
+
+  protected static string | UnitEnum | null $navigationGroup = 'Analysis';
 
   public static function form(Schema $schema): Schema
   {

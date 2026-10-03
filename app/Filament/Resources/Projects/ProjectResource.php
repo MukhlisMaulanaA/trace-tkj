@@ -18,6 +18,8 @@ use App\Filament\Resources\Projects\Tables\ProjectsTable;
 use App\Filament\Resources\Projects\Schemas\ProjectInfolist;
 use App\Filament\Resources\Projects\RelationManagers\ProjectSummaryRelationManager;
 use App\Filament\Resources\Projects\RelationManagers\ProjectProgressRelationManager;
+use UnitEnum;
+
 
 class ProjectResource extends Resource
 {
@@ -26,6 +28,8 @@ class ProjectResource extends Resource
   protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
   protected static ?string $recordTitleAttribute = 'project';
+
+  protected static string | UnitEnum | null $navigationGroup = 'Project Management';
 
   public static function form(Schema $schema): Schema
   {

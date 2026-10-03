@@ -18,6 +18,7 @@ use App\Filament\Resources\PurchaseOrders\Tables\PurchaseOrdersTable;
 use App\Filament\Resources\PurchaseOrders\Schemas\PurchaseOrderInfolist;
 use App\Filament\Resources\PurchaseOrders\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\PurchaseOrders\RelationManagers\PurchaseOrderProgressRelationManager;
+use UnitEnum;
 
 class PurchaseOrderResource extends Resource
 {
@@ -27,6 +28,9 @@ class PurchaseOrderResource extends Resource
     Heroicon::OutlinedRectangleStack;
 
   protected static ?string $recordTitleAttribute = 'po_number';
+
+  protected static string | UnitEnum | null $navigationGroup = 'Project Management';
+
 
   public static function form(Schema $schema): Schema
   {
