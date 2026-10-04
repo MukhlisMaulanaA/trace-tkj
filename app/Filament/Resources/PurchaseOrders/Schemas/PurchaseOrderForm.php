@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PurchaseOrders\Schemas;
 
 use App\Models\Project;
+use App\Models\Vendor;
 use Filament\Support\RawJs;
 use Filament\Schemas\Schema;
 use App\Models\PurchaseOrder;
@@ -69,10 +70,32 @@ class PurchaseOrderForm
         |--------------------------------------------------------------------------
         */
 
-        Section::make('Referensi Project')
-          ->description('Pilih project yang menjadi referensi Purchase Order')
+        Section::make('Referensi Purchase Order')
+          ->description('Pilih project atau vendor yang menjadi referensi Purchase Order')
           ->icon('heroicon-o-briefcase')
           ->schema([
+            Select::make('type')
+              ->label('Type')
+              ->options([
+                'project' => 'Project',
+                'vendor' => 'Vendor',
+              ])
+              ->default('project')
+              ->required()
+              ->live()
+              ->afterStateUpdated(function (string $state, Set $set): void {
+                $set('project_id', null);
+                $set('vendor_id', null);
+
+                if ($state === 'vendor') {
+                  $set('customer', null);
+                  $set('location', null);
+                  $set('quotation_no', null);
+                  $set('pic', null);
+                }
+              })
+              ->columnSpanFull(),
+
             Select::make('project_id')
               ->label('Project')
               ->relationship(
@@ -93,7 +116,8 @@ class PurchaseOrderForm
               ])
               ->preload()
               ->live()
-              ->required()
+              ->visible(fn(Get $get): bool => ($get('type') ?? 'project') === 'project')
+              ->required(fn(Get $get): bool => ($get('type') ?? 'project') === 'project')
               ->placeholder('Pilih project')
               ->afterStateUpdated(function (?string $state, Set $set): void {
                 if (blank($state)) {
@@ -126,6 +150,17 @@ class PurchaseOrderForm
               })
               ->columnSpanFull(),
 
+            Select::make('vendor_id')
+              ->label('Vendor')
+              ->relationship(name: 'vendor', titleAttribute: 'name')
+              ->getOptionLabelFromRecordUsing(fn(Vendor $record): string => $record->name)
+              ->searchable()
+              ->preload()
+              ->visible(fn(Get $get): bool => $get('type') === 'vendor')
+              ->required(fn(Get $get): bool => $get('type') === 'vendor')
+              ->placeholder('Pilih vendor')
+              ->columnSpanFull(),
+
             Grid::make([
               'default' => 1,
               'md' => 2,
@@ -133,7 +168,7 @@ class PurchaseOrderForm
               ->schema([
                 TextInput::make('customer')
                   ->label('Customer')
-                  ->required()
+                  ->required(fn(Get $get): bool => ($get('type') ?? 'project') === 'project')
                   ->placeholder('Otomatis dari project')
                   ->helperText(
                     'Otomatis diambil dari project dan masih dapat disesuaikan.'
@@ -141,7 +176,7 @@ class PurchaseOrderForm
 
                 TextInput::make('location')
                   ->label('Lokasi')
-                  ->required()
+                  ->required(fn(Get $get): bool => ($get('type') ?? 'project') === 'project')
                   ->placeholder('Otomatis dari project')
                   ->helperText(
                     'Otomatis diambil dari project dan masih dapat disesuaikan.'
@@ -156,7 +191,7 @@ class PurchaseOrderForm
 
                 TextInput::make('pic')
                   ->label('PIC / Penanggung Jawab')
-                  ->required()
+                  ->required(fn(Get $get): bool => ($get('type') ?? 'project') === 'project')
                   ->placeholder('Otomatis dari project')
                   ->helperText(
                     'Otomatis diambil dari project dan masih dapat disesuaikan.'

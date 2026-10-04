@@ -19,10 +19,17 @@ class PurchaseOrdersTable
       ->columns([
         TextColumn::make('po_number')
           ->searchable(),
+        TextColumn::make('type')
+          ->label('Type')
+          ->formatStateUsing(fn(string $state): string => ucfirst($state))
+          ->badge(),
         TextColumn::make('po_date')
           ->date()
           ->sortable(),
         TextColumn::make('project.id')
+          ->searchable(),
+        TextColumn::make('vendor.name')
+          ->label('Vendor')
           ->searchable(),
         TextColumn::make('customer')
           ->searchable(),

@@ -82,7 +82,9 @@ class PurchaseOrder extends Model
     'po_code',
     'po_number',
     'po_date',
+    'type',
     'project_id',
+    'vendor_id',
     'customer',
     'location',
     'quotation_no',
@@ -147,6 +149,11 @@ class PurchaseOrder extends Model
       'project_id',
       'id'
     );
+  }
+
+  public function vendor(): BelongsTo
+  {
+    return $this->belongsTo(Vendor::class);
   }
 
   public function items(): HasMany
@@ -362,11 +369,15 @@ class PurchaseOrder extends Model
       return $query;
     }
 
-    return $query->whereHas('project', function ($query) use ($user) {
-      $query->where(
-        'project_source',
-        $user->project_scope
-      );
+    return $query->where(function ($query) use ($user) {
+      $query
+        ->where('type', 'vendor')
+        ->orWhere(function ($projectQuery) use ($user) {
+          $projectQuery->where('type', 'project')
+            ->whereHas('project', function ($query) use ($user) {
+              $query->where('project_source', $user->project_scope);
+            });
+        });
     });
   }
 }

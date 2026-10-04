@@ -15,6 +15,7 @@ class PurchaseOrderPolicy
   public function view(User $user, PurchaseOrder $purchaseOrder): bool
   {
     return $user->isPusat()
+      || $purchaseOrder->type === 'vendor'
       || $purchaseOrder->project?->project_source === $user->project_scope;
   }
 
@@ -28,6 +29,7 @@ class PurchaseOrderPolicy
     PurchaseOrder $purchaseOrder
   ): bool {
     return $user->isPusat()
+      || $purchaseOrder->type === 'vendor'
       || $purchaseOrder->project?->project_source === $user->project_scope;
   }
 
@@ -36,6 +38,7 @@ class PurchaseOrderPolicy
     PurchaseOrder $purchaseOrder
   ): bool {
     return $user->isPusat()
+      || $purchaseOrder->type === 'vendor'
       || $purchaseOrder->project?->project_source === $user->project_scope;
   }
 }

@@ -65,7 +65,10 @@ class TraceDashboard extends Dashboard
     $projectQuery = Project::query()
       ->accessibleBy(Filament::auth()->user())
       ->with(['progresses', 'summary.expenditures', 'purchaseOrders.progresses']);
-    $poQuery = PurchaseOrder::query()->accessibleBy(Filament::auth()->user())->with('progresses');
+    $poQuery = PurchaseOrder::query()
+      ->where('type', 'project')
+      ->accessibleBy(Filament::auth()->user())
+      ->with('progresses');
     $summaryQuery = ProjectSummary::query()->accessibleBy(Filament::auth()->user())->with('expenditures');
 
     if ($source !== 'all') {

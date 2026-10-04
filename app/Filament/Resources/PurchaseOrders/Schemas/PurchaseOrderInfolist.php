@@ -14,8 +14,14 @@ class PurchaseOrderInfolist
         TextEntry::make('po_number'),
         TextEntry::make('po_date')
           ->date(),
+        TextEntry::make('type')
+          ->label('Type')
+          ->formatStateUsing(fn(string $state): string => ucfirst($state)),
         TextEntry::make('project.id')
           ->label('Project')
+          ->placeholder('-'),
+        TextEntry::make('vendor.name')
+          ->label('Vendor')
           ->placeholder('-'),
         TextEntry::make('customer')
           ->placeholder('-'),

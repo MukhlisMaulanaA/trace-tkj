@@ -724,18 +724,18 @@
     {{-- =========================================================
             PO INFORMATION
         ========================================================== --}}
-    <table class="po-meta">
+    <table class="po-meta" contenteditable="true">
       <tr>
         <td class="label">
-          Vendor
+          Customer
         </td>
 
         <td class="separator">
           :
         </td>
 
-        <td class="value" contenteditable="true">
-          {{ $po->customer ?: '-' }}
+        <td class="value">
+          {{ $po->customer ?: $po->vendor->name }}
         </td>
 
         <td class="right-label">
