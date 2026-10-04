@@ -20,8 +20,8 @@ use UnitEnum;
 class VendorResource extends Resource
 {
   protected static ?string $model = Vendor::class;
-
-  protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
+  
+  protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrenchScrewdriver;
 
   protected static ?string $recordTitleAttribute = 'name';
 
