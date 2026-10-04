@@ -206,10 +206,10 @@ class PurchaseOrderForm
                   ->downloadable()
                   ->required()
                   ->openable()
-                  ->disabled(
-                    fn(?PurchaseOrder $record): bool =>
-                      $record?->status === 'submitted'
-                  )
+                  // ->disabled(
+                  //   fn(?PurchaseOrder $record): bool =>
+                  //     $record?->status === 'submitted'
+                  // )
                   ->columnSpanFull(),
               ]),
           ]),

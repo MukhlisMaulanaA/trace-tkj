@@ -17,15 +17,29 @@ class VendorForm
         ->schema([
           TextInput::make('name')
             ->label('Nama Vendor')
+            ->placeholder('Masukan nama vendor')
             ->required()
             ->unique(ignoreRecord: true)
             ->maxLength(255),
           Grid::make(2)->schema([
-            TextInput::make('contact_person')->label('Contact Person')->maxLength(255),
-            TextInput::make('phone')->label('Telepon')->maxLength(255),
-            TextInput::make('email')->email()->maxLength(255),
+            TextInput::make('contact_person')
+            ->label('Contact Person')
+            ->placeholder('Orang yang dihubungi')
+            ->maxLength(255),
+            TextInput::make('phone')
+            ->label('Telepon')
+            ->placeholder('Nomor HP/Whatsapp')
+            ->maxLength(255),
+            TextInput::make('email')
+            ->email()
+            ->placeholder('Email bila diperlukan')
+            ->maxLength(255),
           ]),
-          Textarea::make('address')->label('Alamat')->rows(3)->columnSpanFull(),
+          Textarea::make('address')
+          ->label('Alamat')
+          ->placeholder('Lokasi/Asal Vendor')
+          ->rows(3)
+          ->columnSpanFull(),
         ]),
     ]);
   }
