@@ -89,9 +89,9 @@ class PurchaseOrderInfolist
             fn($record): bool =>
               $record->type === 'project'
           )
+          ->columnSpanFull() // <-- Method untuk membuat section full width
           ->columns([
-            'default' => 1,
-            'sm' => 2,
+            'default' => 3,
           ])
           ->schema([
 
@@ -113,6 +113,11 @@ class PurchaseOrderInfolist
               ->label('Nama Project')
               ->weight(FontWeight::SemiBold)
               ->placeholder('-'),
+
+            TextEntry::make('customer')
+              ->label('Customer')
+              ->placeholder('-')
+              ->weight(FontWeight::SemiBold),
           ]),
 
 
@@ -128,31 +133,34 @@ class PurchaseOrderInfolist
         Section::make('Vendor')
           ->description('Informasi vendor untuk Purchase Order ini.')
           ->icon('heroicon-o-building-storefront')
+          ->columnSpanFull()
           ->visible(
             fn($record): bool =>
               $record->type === 'vendor'
           )
           ->columns([
-            'default' => 1,
-            'sm' => 2,
-            'lg' => 3,
+            'default' => 3,
           ])
           ->schema([
 
             TextEntry::make('vendor.name')
               ->label('Vendor')
               ->weight(FontWeight::Bold)
+              ->size(TextSize::Large)
               ->color('primary')
               ->placeholder('-'),
 
-            TextEntry::make('customer')
+            TextEntry::make('vendor.contact_person')
               ->label('Customer / Pemesan')
               ->placeholder('-'),
 
-            TextEntry::make('quotation_no')
-              ->label('Reference / Quotation')
+            TextEntry::make('vendor.phone')
+              ->label('Kontak')
               ->placeholder('-')
-              ->copyable(),
+              ->color('primary')
+              ->copyable()
+              ->copyMessage('Kontak disalin!')
+              ->copyMessageDuration(1500),
           ]),
 
 
@@ -174,17 +182,11 @@ class PurchaseOrderInfolist
             fn($record): bool =>
               $record->type === 'project'
           )
+          ->columnSpanFull() // <-- Method untuk membuat section full width
           ->columns([
-            'default' => 1,
-            'sm' => 2,
-            'lg' => 4,
+            'default' => 3,
           ])
           ->schema([
-
-            TextEntry::make('customer')
-              ->label('Customer')
-              ->placeholder('-')
-              ->weight(FontWeight::SemiBold),
 
             TextEntry::make('quotation_no')
               ->label('Quotation No.')
@@ -197,12 +199,7 @@ class PurchaseOrderInfolist
 
             TextEntry::make('location')
               ->label('Location')
-              ->placeholder('-')
-              ->columnSpan([
-                'default' => 1,
-                'sm' => 2,
-                'lg' => 1,
-              ]),
+              ->placeholder('-'),
           ]),
 
 
@@ -319,6 +316,7 @@ class PurchaseOrderInfolist
 
         Section::make('Informasi Sistem')
           ->icon('heroicon-o-clock')
+          ->columnSpanFull()
           ->columns([
             'default' => 1,
             'sm' => 2,
