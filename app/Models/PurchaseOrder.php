@@ -172,6 +172,11 @@ class PurchaseOrder extends Model
     )->orderBy('invoice_date');
   }
 
+  public function invoices(): HasMany
+  {
+    return $this->hasMany(Invoice::class)->orderByDesc('invoice_date');
+  }
+
   /*
   |--------------------------------------------------------------------------
   | STATUS HELPERS
