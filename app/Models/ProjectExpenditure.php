@@ -19,6 +19,7 @@ class ProjectExpenditure extends Model
     'description',
     'amount',
     'expenditure_date',
+    'attachment',
   ];
 
   protected function casts(): array

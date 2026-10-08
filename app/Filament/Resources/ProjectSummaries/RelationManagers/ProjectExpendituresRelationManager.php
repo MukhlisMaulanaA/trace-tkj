@@ -10,10 +10,12 @@ use App\Models\ProjectExpenditure;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\DatePicker;
+use Illuminate\Support\Facades\Storage;
 use Filament\Resources\RelationManagers\RelationManager;
 
 class ProjectExpendituresRelationManager extends RelationManager
@@ -68,6 +70,20 @@ class ProjectExpendituresRelationManager extends RelationManager
             ->required()
             ->helperText('Enter the amount in Rupiah. Example: Rp 1,500,000.')
             ->columnSpanFull(),
+
+          FileUpload::make('attachment')
+            ->label('Lampiran')
+            ->disk('public')
+            ->directory('project-expenditures')
+            ->acceptedFileTypes([
+              'application/pdf',
+              'image/*',
+            ])
+            ->maxSize(20480)
+            ->downloadable()
+            ->openable()
+            ->helperText('Opsional. Unggah gambar atau PDF, maksimal 20MB.')
+            ->columnSpanFull(),
         ])
         ->columns(2),
     ]);
@@ -101,6 +117,13 @@ class ProjectExpendituresRelationManager extends RelationManager
           ->label('Tanggal Pengeluaran')
           ->date('d M Y')
           ->sortable(),
+
+        TextColumn::make('attachment')
+          ->label('Lampiran')
+          ->formatStateUsing(fn(?string $state): string => $state ? 'Lihat file' : '-')
+          ->url(fn(?string $state): ?string => $state ? Storage::url($state) : null)
+          ->openUrlInNewTab()
+          ->color('primary'),
       ])
       ->defaultSort('expenditure_date', 'desc')
       ->headerActions([

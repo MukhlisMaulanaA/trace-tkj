@@ -118,4 +118,28 @@ class ProjectSummaryTest extends TestCase
     $this->assertSame(90650.0, $summary->remaining_budget);
     $this->assertSame(102650.0, $summary->balance);
   }
+
+  public function test_expenditure_attachment_is_optional_and_persisted(): void
+  {
+    $project = Project::create([
+      'nama_project' => 'Attachment Test',
+      'kustomer' => 'Customer C',
+      'lokasi' => 'Surabaya',
+      'nomor_quotation' => 'Q-003',
+    ]);
+
+    $summary = $project->summary;
+    $expenditure = $summary->expenditures()->create([
+      'type' => ProjectExpenditure::TYPE_MATERIAL,
+      'description' => 'Optional attachment',
+      'amount' => 1000,
+      'expenditure_date' => '2026-10-08',
+    ]);
+
+    $this->assertNull($expenditure->attachment);
+
+    $expenditure->update(['attachment' => 'project-expenditures/receipt.pdf']);
+
+    $this->assertSame('project-expenditures/receipt.pdf', $expenditure->fresh()->attachment);
+  }
 }
