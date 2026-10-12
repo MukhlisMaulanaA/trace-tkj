@@ -16,13 +16,15 @@ class ViewInvoice extends ViewRecord
   {
     return [
       Action::make('invoicePdf')
-        ->label('Preview Invoice')
-        ->icon('heroicon-o-eye')
+        ->label('Dokumen Invoice')
+        ->icon('heroicon-o-document-text')
+        ->color('success')
         ->url(fn(Invoice $record): string => route('invoices.document', $record))
         ->openUrlInNewTab(),
       Action::make('receiptPdf')
-        ->label('Preview Receipt')
-        ->icon('heroicon-o-eye')
+        ->label('Generate Kwitansi')
+        ->icon('heroicon-o-banknotes')
+        ->color('warning')
         ->url(fn(Invoice $record): string => route('invoices.receipt', $record))
         ->openUrlInNewTab(),
       EditAction::make(),

@@ -102,8 +102,9 @@
     </header>
     <hr class="header-rule">
     <table class="meta">
-      <tr><td class="label">To</td><td class="separator">:</td><td class="value">{{ $invoice->recipient }}</td><td class="right-label">Invoice ID</td><td class="separator">:</td><td class="value">{{ $invoice->invoice_code }}</td></tr>
-      <tr><td class="label">Purchase Order</td><td class="separator">:</td><td class="value">{{ $invoice->purchaseOrder->po_number }}</td><td class="right-label">Date</td><td class="separator">:</td><td class="value">{{ $date($invoice->invoice_date) }}</td></tr>
+      <tr><td class="label">To</td><td class="separator">:</td><td class="value">{{ $invoice->recipient }}</td><td class="right-label">invoice_code</td><td class="separator">:</td><td class="value">{{ $invoice->invoice_code }}</td></tr>
+      <tr><td class="label">Invoice Number</td><td class="separator">:</td><td class="value">{{ $invoice->invoice_number ?: '-' }}</td><td class="right-label">Date</td><td class="separator">:</td><td class="value">{{ $date($invoice->invoice_date) }}</td></tr>
+      <tr><td class="label">Purchase Order</td><td class="separator">:</td><td class="value">{{ $invoice->purchaseOrder->po_number }}</td><td class="right-label"></td><td class="separator"></td><td class="value"></td></tr>
       <tr><td class="label">Project</td><td class="separator">:</td><td class="value">{{ $invoice->project_name ?: '-' }}</td><td class="right-label">Payment</td><td class="separator">:</td><td class="value">{{ ucwords(str_replace('_', ' ', $invoice->payment_type)) }}</td></tr>
     </table>
     <table class="items-table">

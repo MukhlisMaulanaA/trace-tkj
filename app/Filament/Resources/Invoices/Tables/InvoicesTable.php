@@ -14,7 +14,8 @@ class InvoicesTable
   public static function configure(Table $table): Table
   {
     return $table->columns([
-      TextColumn::make('invoice_code')->label('Invoice ID')->searchable()->sortable(),
+      TextColumn::make('invoice_code')->label('invoice_code')->searchable()->sortable(),
+      TextColumn::make('invoice_number')->label('Invoice Number')->searchable()->sortable(),
       TextColumn::make('recipient')->label('To')->searchable(),
       TextColumn::make('purchaseOrder.po_number')->label('PO Number')->searchable(),
       TextColumn::make('project_name')->searchable(),

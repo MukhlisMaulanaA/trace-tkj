@@ -84,7 +84,8 @@
     <hr class="header-rule">
     <h1 class="receipt-title">KWITANSI</h1>
     <table class="receipt-meta">
-      <tr><td class="label">No.</td><td class="separator">:</td><td class="value">{{ $invoice->invoice_code }}</td></tr>
+      <tr><td class="label">invoice_code</td><td class="separator">:</td><td class="value">{{ $invoice->invoice_code }}</td></tr>
+      <tr><td class="label">Invoice Number</td><td class="separator">:</td><td class="value">{{ $invoice->invoice_number ?: '-' }}</td></tr>
       <tr><td class="label">Sudah Terima dari</td><td class="separator">:</td><td class="value">{{ $invoice->recipient }}</td></tr>
       <tr><td class="label">Untuk Pembayaran</td><td class="separator">:</td><td class="value">{{ $invoice->purchaseOrder->po_number }}</td></tr>
     </table>

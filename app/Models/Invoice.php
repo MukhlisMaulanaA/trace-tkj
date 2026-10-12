@@ -15,6 +15,7 @@ class Invoice extends Model
 
   protected $fillable = [
     'invoice_code',
+    'invoice_number',
     'recipient',
     'purchase_order_id',
     'project_name',
@@ -125,6 +126,7 @@ class Invoice extends Model
       'dpp_amount' => $dppAmount,
       'ppn_amount' => $ppnAmount,
       'grand_total' => max(0, round($subtotalAfterDiscount + $ppnAmount)),
+      'payment_progress_amount' => max(0, round($subtotalAfterDiscount + $ppnAmount)),
     ])->saveQuietly();
   }
 
