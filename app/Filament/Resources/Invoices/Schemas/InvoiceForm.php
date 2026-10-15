@@ -36,7 +36,6 @@ class InvoiceForm
             ->searchable(['po_number', 'po_code'])
             ->preload()
             ->live()
-            ->required()
             ->afterStateUpdated(function (?string $state, Set $set): void {
               $purchaseOrder = blank($state) ? null : PurchaseOrder::accessibleBy(auth()->user())->find($state);
               $set('project_name', $purchaseOrder?->project?->nama_project);
@@ -53,13 +52,15 @@ class InvoiceForm
       ]),
       Section::make('Payment Details')->schema([
         Grid::make(['default' => 1, 'md' => 2])->schema([
-          Select::make('payment_type')->label('Payment Type')->options([
-            'full_payment' => 'Full Payment',
-            'down_payment' => 'Down Payment',
-          ])->default('full_payment')->required(),
+          TextInput::make('payment_type')->label('Payment Type')->required(),
           Select::make('payment_method')->label('Payment Method')->options(self::paymentMethods())->default('mandiri')->required()->live(),
           Placeholder::make('payment_account')->label('Payment Account')->content(fn(Get $get): string => self::paymentAccount($get('payment_method')))->columnSpanFull(),
-          TextInput::make('payment_progress')->label('Payment Progress')->placeholder('Contoh: 50% / Termin 1'),
+          TextInput::make('payment_progress')
+            ->label('Payment Progress')
+            ->numeric()
+            ->minValue(0)
+            ->maxValue(100)
+            ->suffix('%'),
           TextInput::make('payment_progress_amount')->label('Payment Progress Amount')->prefix('Rp')->numeric()->mask(RawJs::make('$money($input)'))->stripCharacters(',')->disabled()->dehydrated(false),
           Textarea::make('payment_notes')->label('Payment Notes')->rows(2)->columnSpanFull(),
         ]),

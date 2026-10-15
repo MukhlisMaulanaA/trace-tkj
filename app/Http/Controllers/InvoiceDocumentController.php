@@ -33,7 +33,10 @@ class InvoiceDocumentController extends Controller
   private function authorizeInvoice(Invoice $invoice): void
   {
     $invoice->loadMissing('purchaseOrder');
-    Gate::authorize('view', $invoice->purchaseOrder);
+
+    if ($invoice->purchaseOrder) {
+      Gate::authorize('view', $invoice->purchaseOrder);
+    }
   }
 
   private function bankDetails(string $method): array

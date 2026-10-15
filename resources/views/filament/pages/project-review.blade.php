@@ -1,45 +1,45 @@
 <x-filament-panels::page>
   <?php $cards = $this->reviewCards() ?>
 
-  <div class="-mx-4 min-h-screen bg-[#080b12] px-4 pb-8 text-slate-200 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+  <div class="-mx-4 min-h-screen bg-slate-50 px-4 pb-8 text-slate-800 dark:bg-[#080b12] dark:text-slate-200 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
     <div class="mx-auto w-full max-w-[1400px] space-y-5 pt-2">
-      <header class="grid gap-5 border-b border-slate-800/80 pb-5 xl:grid-cols-[minmax(16rem,0.8fr)_minmax(0,2.2fr)] xl:items-end">
+      <header class="grid gap-5 border-b border-slate-200 pb-5 dark:border-slate-800/80 xl:grid-cols-[minmax(16rem,0.8fr)_minmax(0,2.2fr)] xl:items-end">
         <div class="min-w-0">
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-sky-400">TRACE TKJ</p>
           <div class="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1 class="whitespace-nowrap text-xl font-semibold tracking-tight text-slate-100">Status Proyek</h1>
-            <span class="text-sm text-slate-500">{{ $cards->count() }} project aktif</span>
+            <h1 class="whitespace-nowrap text-xl font-semibold tracking-tight text-slate-950 dark:text-slate-100">Status Proyek</h1>
+            <span class="text-sm text-slate-500 dark:text-slate-500">{{ $cards->count() }} project aktif</span>
           </div>
         </div>
         <div class="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <label class="sr-only" for="project-review-search">Cari project</label>
           <input id="project-review-search" type="search" wire:model.live.debounce.300ms="search"
             placeholder="Cari ID, project, atau PO..."
-            class="h-10 w-full min-w-0 rounded-md border border-slate-800 bg-[#0d121c] px-3 text-sm text-slate-200 placeholder:text-slate-600 focus:border-sky-500 focus:ring-sky-500">
+            class="h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:ring-sky-500 dark:border-slate-800 dark:bg-[#0d121c] dark:text-slate-200 dark:placeholder:text-slate-600">
           <label class="sr-only" for="project-review-source">Sumber project</label>
           <select id="project-review-source" wire:model.live="source"
-            class="h-10 rounded-md border border-slate-800 bg-[#0d121c] px-3 text-sm text-slate-300 focus:border-sky-500 focus:ring-sky-500">
+            class="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-sky-500 focus:ring-sky-500 dark:border-slate-800 dark:bg-[#0d121c] dark:text-slate-300">
             <?php foreach ($this->sourceOptions() as $value => $label): ?>
               <option value="{{ $value }}">{{ $label }}</option>
             <?php endforeach; ?>
           </select>
           <label class="sr-only" for="project-review-completion">Status project</label>
           <select id="project-review-completion" wire:model.live="completion"
-            class="h-10 rounded-md border border-slate-800 bg-[#0d121c] px-3 text-sm text-slate-300 focus:border-sky-500 focus:ring-sky-500">
+            class="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-sky-500 focus:ring-sky-500 dark:border-slate-800 dark:bg-[#0d121c] dark:text-slate-300">
             <?php foreach ($this->completionOptions() as $value => $label): ?>
               <option value="{{ $value }}">{{ $label }}</option>
             <?php endforeach; ?>
           </select>
           <label class="sr-only" for="project-review-sort">Urutkan project</label>
           <select id="project-review-sort" wire:model.live="sort"
-            class="h-10 rounded-md border border-slate-800 bg-[#0d121c] px-3 text-sm text-slate-300 focus:border-sky-500 focus:ring-sky-500">
+            class="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-sky-500 focus:ring-sky-500 dark:border-slate-800 dark:bg-[#0d121c] dark:text-slate-300">
             <?php foreach ($this->sortOptions() as $value => $label): ?>
               <option value="{{ $value }}">{{ $label }}</option>
             <?php endforeach; ?>
           </select>
           <label class="sr-only" for="project-review-direction">Arah pengurutan</label>
           <select id="project-review-direction" wire:model.live="direction"
-            class="h-10 rounded-md border border-slate-800 bg-[#0d121c] px-3 text-sm text-slate-300 focus:border-sky-500 focus:ring-sky-500">
+            class="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-sky-500 focus:ring-sky-500 dark:border-slate-800 dark:bg-[#0d121c] dark:text-slate-300">
             <?php foreach ($this->directionOptions() as $value => $label): ?>
               <option value="{{ $value }}">{{ $label }}</option>
             <?php endforeach; ?>
@@ -48,8 +48,8 @@
       </header>
 
       <?php if ($cards->isEmpty()): ?>
-        <section class="rounded-lg border border-dashed border-slate-800 bg-[#0d121c] px-6 py-16 text-center">
-          <p class="font-semibold text-slate-200">Tidak ada project yang sesuai.</p>
+        <section class="rounded-lg border border-dashed border-slate-300 bg-white px-6 py-16 text-center dark:border-slate-800 dark:bg-[#0d121c]">
+          <p class="font-semibold text-slate-900 dark:text-slate-200">Tidak ada project yang sesuai.</p>
           <p class="mt-1 text-sm text-slate-500">Coba ubah pencarian atau filter sumber project.</p>
         </section>
       <?php else: ?>
@@ -63,32 +63,32 @@
                   default => 'bg-blue-500',
               };
               $workBadge = match ($workTone) {
-                  'success' => 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
-                  'warning' => 'bg-amber-500/10 text-amber-400 ring-amber-500/20',
-                  default => 'bg-blue-500/10 text-blue-400 ring-blue-500/20',
+                  'success' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
+                  'warning' => 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
+                  default => 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20',
               };
               $workText = match ($workTone) {
-                  'success' => 'text-emerald-400',
-                  'warning' => 'text-amber-400',
-                  default => 'text-blue-400',
+                  'success' => 'text-emerald-600 dark:text-emerald-400',
+                  'warning' => 'text-amber-600 dark:text-amber-400',
+                  default => 'text-blue-600 dark:text-blue-400',
               };
                 $statusBadge = $card['is_completed']
-                  ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
+                  ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20'
                   : $workBadge;
                 $statusLabel = $card['is_completed'] ? 'Project Completed' : $card['work_status']['label'];
             @endphp
             <article
-              class="flex min-w-0 flex-col overflow-hidden rounded-lg border border-slate-800 bg-[#0d121c] shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
-              <div class="border-b border-slate-800/80 px-4 py-4">
+              class="flex min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-[#0d121c] dark:shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
+              <div class="border-b border-slate-200 px-4 py-4 dark:border-slate-800/80">
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <div
-                      class="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                        class="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
                       <span>{{ $card['project_id'] }}</span><span
-                        class="text-slate-700">•</span><span>{{ $card['source'] }}</span>
+                        class="text-slate-300 dark:text-slate-700">•</span><span>{{ $card['source'] }}</span>
                     </div>
                     <a href="{{ $this->projectUrl($card['project']) }}"
-                      class="mt-1 block truncate text-base font-semibold text-slate-100 hover:text-sky-400">{{ $card['project_name'] }}</a>
+                      class="mt-1 block truncate text-base font-semibold text-slate-900 hover:text-sky-600 dark:text-slate-100 dark:hover:text-sky-400">{{ $card['project_name'] }}</a>
                     <p class="mt-1 truncate text-xs text-slate-500">{{ $card['customer'] }} ·
                       {{ $card['location'] }}</p>
                   </div>
@@ -104,7 +104,7 @@
                     <span>Progress pekerjaan</span><span
                       class="font-semibold {{ $workText }}">{{ $this->percentage($card['work_progress']) }}</span>
                   </div>
-                  <div class="h-2 overflow-hidden rounded-full bg-slate-800">
+                  <div class="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                     <div class="h-full rounded-full {{ $workBar }}"
                       style="width: {{ min(100, max(0, $card['work_progress'])) }}%"></div>
                   </div>
@@ -117,7 +117,7 @@
                     <span>Progress tagihan</span><span
                       class="font-semibold text-sky-400">{{ $this->percentage($card['payment_progress']) }}</span>
                   </div>
-                  <div class="h-2 overflow-hidden rounded-full bg-slate-800">
+                  <div class="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                     <div class="h-full rounded-full bg-sky-500"
                       style="width: {{ min(100, max(0, $card['payment_progress'])) }}%"></div>
                   </div>
@@ -127,7 +127,7 @@
                 </div>
               </div>
 
-              <div class="border-t border-slate-800/80 px-4 py-3">
+              <div class="border-t border-slate-200 px-4 py-3 dark:border-slate-800/80">
                 <div
                   class="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.12em] text-slate-500">
                   <span>Purchase orders</span><span>{{ $card['po_count'] }} PO · {{ $card['invoice_count'] }}
@@ -150,14 +150,14 @@
                             default => 'text-blue-400',
                         };
                       @endphp
-                      <details class="group rounded-md border border-slate-800 bg-[#111824] open:bg-[#141c29]">
+                      <details class="group rounded-md border border-slate-200 bg-slate-50 open:bg-slate-100 dark:border-slate-800 dark:bg-[#111824] dark:open:bg-[#141c29]">
                         <summary
                           class="flex min-w-0 cursor-pointer list-none items-center gap-2 px-2 py-2 [&::-webkit-details-marker]:hidden">
                           <a href="{{ $purchaseOrder['url'] }}"
-                            class="w-20 shrink-0 text-xs font-medium text-slate-300 hover:text-sky-400 sm:w-24"
+                            class="w-20 shrink-0 text-xs font-medium text-slate-700 hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400 sm:w-24"
                             onclick="event.stopPropagation()">{{ $purchaseOrder['po_number'] }}</a>
                           <div class="min-w-0 flex-1">
-                            <div class="h-1 overflow-hidden rounded-full bg-slate-800">
+                            <div class="h-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                               <div class="h-full rounded-full {{ $poBar }}"
                                 style="width: {{ min(100, max(0, $purchaseOrder['payment_progress'])) }}%"></div>
                             </div>
@@ -168,7 +168,7 @@
                             class="shrink-0 text-xs font-semibold {{ $poText }}">{{ $this->percentage($purchaseOrder['payment_progress']) }}</span><span
                             class="text-sm text-slate-500 transition group-open:rotate-180">⌄</span>
                         </summary>
-                        <div class="border-t border-slate-800 px-2 pb-2 pt-1.5">
+                        <div class="border-t border-slate-200 px-2 pb-2 pt-1.5 dark:border-slate-800">
                           <?php if ($purchaseOrder['invoices']->isEmpty()): ?>
                             <p class="py-1 text-xs text-slate-500">Belum ada invoice.</p>
                           <?php else: ?>
@@ -177,7 +177,7 @@
                                   class="h-1.5 w-1.5 shrink-0 rounded-full {{ $poBar }}"></span><span
                                   class="min-w-0 flex-1 truncate text-xs">{{ $invoice->title ?: $invoice->description ?: 'Invoice' }}</span><span
                                   class="shrink-0 text-xs">{{ $invoice->invoice_date?->format('d M Y') ?? '-' }}</span><span
-                                  class="shrink-0 text-xs font-medium text-slate-300">{{ $this->money($invoice->amount) }}</span>
+                                  class="shrink-0 text-xs font-medium text-slate-700 dark:text-slate-300">{{ $this->money($invoice->amount) }}</span>
                               </div>
                             <?php endforeach; ?>
                           <?php endif; ?>
@@ -189,7 +189,7 @@
               </div>
 
               <div
-                class="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-slate-800/80 bg-[#0a0f17] px-4 py-3 text-xs text-slate-500">
+                class="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 dark:border-slate-800/80 dark:bg-[#0a0f17]">
                 <span>Aktivitas terakhir
                   {{ $card['latest_activity_date']?->format('d M Y') ?? '-' }}</span><span>Value: {{ $this->money($card['po_value']) }}</span>
               </div>

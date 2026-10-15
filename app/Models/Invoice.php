@@ -42,6 +42,7 @@ class Invoice extends Model
   {
     return [
       'invoice_date' => 'date',
+      'payment_progress' => 'decimal:2',
       'payment_progress_amount' => 'decimal:2',
       'subtotal' => 'decimal:0',
       'discount_enabled' => 'boolean',
@@ -110,14 +111,18 @@ class Invoice extends Model
     }
 
     $subtotalAfterDiscount = max(0, $subtotal - $discountAmount);
-    $dppAmount = $this->dpp_enabled ? round($subtotalAfterDiscount * self::DPP_FACTOR) : 0;
+    $paymentProgressPercent = max(0, min(100, (float) $this->payment_progress));
+    $paymentProgressAmount = round($subtotalAfterDiscount * ($paymentProgressPercent / 100));
+    $dppAmount = $this->dpp_enabled ? round($paymentProgressAmount * self::DPP_FACTOR) : 0;
     $ppnAmount = 0;
 
     if ($this->ppn_enabled) {
       $ppnAmount = $this->dpp_enabled
         ? round($dppAmount * 0.12)
-        : round($subtotalAfterDiscount * 0.11);
+        : round($paymentProgressAmount * 0.11);
     }
+
+    $grandTotal = max(0, round($paymentProgressAmount + $ppnAmount));
 
     $this->forceFill([
       'subtotal' => $subtotal,
@@ -125,8 +130,8 @@ class Invoice extends Model
       'discount_amount' => $discountAmount,
       'dpp_amount' => $dppAmount,
       'ppn_amount' => $ppnAmount,
-      'grand_total' => max(0, round($subtotalAfterDiscount + $ppnAmount)),
-      'payment_progress_amount' => max(0, round($subtotalAfterDiscount + $ppnAmount)),
+      'grand_total' => $grandTotal,
+      'payment_progress_amount' => $paymentProgressAmount,
     ])->saveQuietly();
   }
 
@@ -134,6 +139,14 @@ class Invoice extends Model
   {
     $user ??= auth()->user();
 
-    return $query->whereHas('purchaseOrder', fn($poQuery) => $poQuery->accessibleBy($user));
+    if (!$user) {
+      return $query->whereRaw('1 = 0');
+    }
+
+    return $query->where(function ($invoiceQuery) use ($user): void {
+      $invoiceQuery
+        ->whereNull('purchase_order_id')
+        ->orWhereHas('purchaseOrder', fn($poQuery) => $poQuery->accessibleBy($user));
+    });
   }
 }

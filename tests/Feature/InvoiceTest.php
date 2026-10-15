@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Project;
 use App\Models\PurchaseOrder;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -30,11 +31,14 @@ class InvoiceTest extends TestCase
     $invoice = Invoice::create([
       'invoice_number' => 'CUSTOM-INV-001',
       'recipient' => 'Customer A',
-      'purchase_order_id' => $purchaseOrder->id,
       'project_name' => 'Invoice Test',
       'invoice_date' => '2026-10-12',
-      'payment_type' => 'full_payment',
+      'payment_type' => 'Progress Billing',
+      'payment_progress' => 30,
       'payment_method' => 'mandiri',
+      'discount_enabled' => true,
+      'discount_type' => 'percent',
+      'discount_percent' => 10,
       'dpp_enabled' => true,
       'ppn_enabled' => true,
     ]);
@@ -47,13 +51,24 @@ class InvoiceTest extends TestCase
     ]);
 
     $invoice->refresh();
+    $user = User::factory()->create(['project_scope' => 'pusat']);
 
     $this->assertSame('CUSTOM-INV-001', $invoice->invoice_number);
     $this->assertSame('INV26J001', $invoice->invoice_code);
     $this->assertSame(200000.0, (float) $invoice->subtotal);
-    $this->assertSame(183333.0, (float) $invoice->dpp_amount);
-    $this->assertSame(22000.0, (float) $invoice->ppn_amount);
-    $this->assertSame(222000.0, (float) $invoice->grand_total);
-    $this->assertSame(222000.0, (float) $invoice->payment_progress_amount);
+    $this->assertNull($invoice->purchase_order_id);
+    $this->assertSame('Progress Billing', $invoice->payment_type);
+    $this->assertSame(49500.0, (float) $invoice->dpp_amount);
+    $this->assertSame(5940.0, (float) $invoice->ppn_amount);
+    $this->assertSame(59940.0, (float) $invoice->grand_total);
+    $this->assertSame(54000.0, (float) $invoice->payment_progress_amount);
+    $this->assertTrue(Invoice::accessibleBy($user)->whereKey($invoice)->exists());
+
+    $this->actingAs($user)
+      ->get(route('invoices.document', $invoice))
+      ->assertOk();
+    $this->actingAs($user)
+      ->get(route('invoices.receipt', $invoice))
+      ->assertOk();
   }
 }
