@@ -69,7 +69,7 @@ class TraceDashboard extends Dashboard
       ->where('type', 'project')
       ->accessibleBy(Filament::auth()->user())
       ->with('progresses');
-    $summaryQuery = ProjectSummary::query()->accessibleBy(Filament::auth()->user())->with('expenditures');
+    $summaryQuery = ProjectSummary::query()->accessibleBy(Filament::auth()->user())->with(['project', 'expenditures']);
 
     if ($source !== 'all') {
       $projectQuery->where('project_source', $source);
@@ -86,39 +86,74 @@ class TraceDashboard extends Dashboard
     $progresses = $projects->flatMap(fn(Project $project) => $project->progresses)
       ->filter(fn(ProjectProgress $progress) => $this->inPeriod($progress->waktu_progres, $period))
       ->sortByDesc('waktu_progres');
+    $allInvoiceProgresses = $purchaseOrders->flatMap(fn(PurchaseOrder $order) => $order->progresses);
     $invoiceProgresses = $purchaseOrders->flatMap(fn(PurchaseOrder $order) => $order->progresses)
       ->filter(fn(PurchaseOrderProgress $progress) => $this->inPeriod($progress->invoice_date, $period))
       ->sortByDesc('invoice_date');
     $invoiceValue = (float) $invoiceProgresses->sum('amount');
+    $cumulativeInvoiceValue = (float) $allInvoiceProgresses->sum('amount');
     $commitmentValue = (float) $purchaseOrders->sum('grand_total');
     $invoicePercentage = $commitmentValue > 0
-      ? ($invoiceValue / $commitmentValue) * 100
+      ? ($cumulativeInvoiceValue / $commitmentValue) * 100
       : 0;
     $expenditures = $summaries->flatMap(fn(ProjectSummary $summary) => $summary->expenditures)
       ->filter(fn(ProjectExpenditure $expenditure) => $this->inPeriod($expenditure->expenditure_date, $period));
+    $allExpenditures = $summaries->flatMap(fn(ProjectSummary $summary) => $summary->expenditures);
+    $activityDates = collect([
+      ...$purchaseOrders->pluck('po_date')->all(),
+      ...$allInvoiceProgresses->pluck('invoice_date')->all(),
+      ...$allExpenditures->pluck('expenditure_date')->all(),
+      ...$projects->pluck('created_at')->all(),
+    ])->filter()->map(fn($date) => Carbon::parse($date)->startOfMonth());
+    $chartStart = $activityDates->isNotEmpty() ? $activityDates->min() : now()->startOfMonth();
+    $chartMonthCount = max(12, (int) $chartStart->diffInMonths(now()->startOfMonth()) + 1);
+    $chart = collect(range($chartMonthCount - 1, 0))->map(function (int $monthsAgo) use ($allInvoiceProgresses, $allExpenditures, $summaries, $purchaseOrders): array {
+      $month = now()->startOfMonth()->subMonths($monthsAgo);
+      $monthKey = $month->format('Y-m');
+
+      return [
+        'label' => $month->format('M'),
+        'po' => (float) $purchaseOrders->filter(fn(PurchaseOrder $order) => $order->po_date && Carbon::parse($order->po_date)->format('Y-m') === $monthKey)->sum('grand_total'),
+        'profit' => (float) $summaries->filter(fn(ProjectSummary $summary) => $summary->project?->created_at && Carbon::parse($summary->project->created_at)->format('Y-m') === $monthKey)->sum(fn(ProjectSummary $summary) => $summary->final_profit),
+        'expenditure' => (float) $allExpenditures->filter(fn(ProjectExpenditure $expenditure) => Carbon::parse($expenditure->expenditure_date)->format('Y-m') === $monthKey)->sum('amount'),
+      ];
+    });
+    $chartMax = max(1, (float) $chart->max(fn(array $point): float => max($point['po'], $point['profit'], $point['expenditure'])));
+    $chartRanges = collect([
+      '3m' => $chart->slice(-3)->values(),
+      '6m' => $chart->slice(-6)->values(),
+      '1y' => $chart->slice(-12)->values(),
+      'all' => $chart->values(),
+    ])->mapWithKeys(fn(Collection $points, string $key) => [$key => $this->chartPayload($points)]);
     $latestProgressByProject = $projects->mapWithKeys(fn(Project $project) => [
       $project->id => $project->progresses->sortByDesc('waktu_progres')->first(),
     ]);
 
-    $attention = $summaries->filter(fn(ProjectSummary $summary) => $summary->remaining_budget < 0)
-      ->map(fn(ProjectSummary $summary) => [
-        'severity' => 'CRITICAL',
-        'title' => $summary->project_name ?: $summary->project_id,
-        'detail' => 'Sisa Budget project bernilai negatif.',
-        'url' => ProjectSummaryResource::getUrl('view', ['record' => $summary]),
-      ])
+    $attention = $this->staleProjectAttention($projects)
       ->concat($this->stalePurchaseOrderAttention($purchaseOrders))
+      ->sortBy('date')
       ->values()
-      ->take(5);
+      ->take(8);
+    $highlights = $this->projectHighlights($summaries);
+    $lastMonth = [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()];
+    $previousProjects = $projects->filter(fn(Project $project) => $project->created_at && Carbon::parse($project->created_at)->lte($lastMonth[1]));
+    $previousOrders = $purchaseOrders->filter(fn(PurchaseOrder $order) => $order->po_date && Carbon::parse($order->po_date)->lte($lastMonth[1]));
+    $previousSummaries = $summaries->filter(fn(ProjectSummary $summary) => $summary->project?->created_at && Carbon::parse($summary->project->created_at)->lte($lastMonth[1]));
+    $materialTotal = (float) $expenditures->where('type', ProjectExpenditure::TYPE_MATERIAL)->sum('amount');
+    $labourTotal = (float) $expenditures->where('type', ProjectExpenditure::TYPE_LABOUR)->sum('amount');
+    $expenditureTotal = $materialTotal + $labourTotal;
+    $profitTotal = max(0, (float) $summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit));
+    $remainingBudgetTotal = max(0, (float) $summaries->sum(fn(ProjectSummary $summary) => $summary->remaining_budget));
+    $financialMixTotal = max(1, $expenditureTotal + $profitTotal + $remainingBudgetTotal);
 
     return [
       'sourceLabel' => $this->sourceOptions()[$source] ?? 'Semua Sumber',
       'periodLabel' => $this->periodOptions()[$this->period] ?? 'Bulan ini',
       'kpis' => [
-        ['label' => 'Total Project', 'value' => number_format($projects->count()), 'tone' => 'blue', 'url' => ProjectResource::getUrl('index')],
-        ['label' => 'Total Purchase Order', 'value' => number_format($purchaseOrders->count()), 'tone' => 'indigo', 'url' => PurchaseOrderResource::getUrl('index')],
-        ['label' => 'Total Nilai PO', 'value' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->contract_value)), 'tone' => 'amber', 'url' => ProjectSummaryResource::getUrl('index')],
-        ['label' => 'Final Profit', 'value' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit)), 'tone' => 'emerald', 'url' => ProjectSummaryResource::getUrl('index')],
+        ['label' => 'Total Project', 'value' => number_format($projects->count()), 'comparison' => $this->comparison($projects->count(), $previousProjects->count()), 'tone' => 'blue', 'url' => ProjectResource::getUrl('index')],
+        ['label' => 'Total Purchase Order', 'value' => number_format($purchaseOrders->count()), 'comparison' => $this->comparison($purchaseOrders->count(), $previousOrders->count()), 'tone' => 'indigo', 'url' => PurchaseOrderResource::getUrl('index')],
+        ['label' => 'Total Nilai PO', 'value' => $this->money($commitmentValue), 'comparison' => $this->comparison($commitmentValue, $previousOrders->sum('grand_total')), 'tone' => 'amber', 'url' => ProjectSummaryResource::getUrl('index')],
+        ['label' => 'Final Profit', 'value' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit)), 'comparison' => $this->comparison($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit), $previousSummaries->sum(fn(ProjectSummary $summary) => $summary->final_profit)), 'tone' => 'emerald', 'url' => ProjectSummaryResource::getUrl('index')],
       ],
       'financial' => [
         'Total Nilai PO' => $this->money($commitmentValue),
@@ -131,22 +166,40 @@ class TraceDashboard extends Dashboard
         'Invoice / PO progress' => $invoiceProgresses->count(),
         'Total Nilai Invoice' => $this->money($invoiceValue),
         'Persentase Invoice' => number_format($invoicePercentage, 2) . '%',
+        'Monthly Invoice' => $commitmentValue > 0 ? number_format(($invoiceValue / $commitmentValue) * 100, 2) . '%' : '0.00%',
       ],  
+      'utilization' => $commitmentValue > 0
+        ? min(100, round(($expenditures->sum('amount') / $commitmentValue) * 100))
+        : 0,
+      'chart' => [
+        'points' => $chart,
+        'max' => $chartMax,
+      ],
+      'chartRanges' => $chartRanges,
+      'financialMix' => [
+        ['label' => 'Pengeluaran', 'percentage' => round(($expenditureTotal / $financialMixTotal) * 100), 'tone' => 'blue'],
+        ['label' => 'Profit', 'percentage' => round(($profitTotal / $financialMixTotal) * 100), 'tone' => 'green'],
+        ['label' => 'Sisa Budget', 'percentage' => round(($remainingBudgetTotal / $financialMixTotal) * 100), 'tone' => 'red'],
+      ],
       'expenditure' => [
-        'Material' => $this->money($expenditures->where('type', ProjectExpenditure::TYPE_MATERIAL)->sum('amount')),
-        'Labour' => $this->money($expenditures->where('type', ProjectExpenditure::TYPE_LABOUR)->sum('amount')),
+        'Material' => ['amount' => $this->money($materialTotal), 'percentage' => $expenditureTotal > 0 ? round(($materialTotal / $expenditureTotal) * 100) : 0],
+        'Labour' => ['amount' => $this->money($labourTotal), 'percentage' => $expenditureTotal > 0 ? round(($labourTotal / $expenditureTotal) * 100) : 0],
       ],
       'attention' => $attention,
+      'highlights' => $highlights,
       'recentProjects' => $recentProjects->map(fn(Project $project) => [
         'label' => 'Project dibuat',
         'title' => $project->nama_project,
         'date' => $project->created_at?->format('d M Y'),
+        'location' => $project->lokasi ?: 'Lokasi tidak tersedia',
         'url' => ProjectResource::getUrl('view', ['record' => $project]),
       ]),
       'recentOrders' => $recentOrders->map(fn(PurchaseOrder $order) => [
         'label' => 'PO ditambahkan',
         'title' => $order->po_number,
         'date' => $order->po_date ? Carbon::parse($order->po_date)->format('d M Y') : '-',
+        'progress' => $this->purchaseOrderProgressPercentage($order),
+        'value' => $this->money($order->grand_total),
         'url' => PurchaseOrderResource::getUrl('view', ['record' => $order]),
       ]),
       'latestProgressByProject' => $latestProgressByProject,
@@ -177,7 +230,7 @@ class TraceDashboard extends Dashboard
 
   private function stalePurchaseOrderAttention(Collection $purchaseOrders): Collection
   {
-    $staleSince = now()->subMonth();
+    $staleSince = now()->subDays(30);
 
     return $purchaseOrders
       ->filter(function (PurchaseOrder $purchaseOrder) use ($staleSince): bool {
@@ -195,16 +248,137 @@ class TraceDashboard extends Dashboard
       })
       ->map(function (PurchaseOrder $purchaseOrder): array {
         $hasProgress = $purchaseOrder->progresses->isNotEmpty();
+        $lastProgress = $purchaseOrder->progresses->sortByDesc('invoice_date')->first();
+        $lastActivity = $lastProgress?->invoice_date ?? $purchaseOrder->po_date;
 
         return [
           'severity' => 'WARNING',
           'title' => $purchaseOrder->po_number,
+          'date' => Carbon::parse($lastActivity)->timestamp,
           'detail' => $hasProgress
-            ? 'Tidak ada invoice atau progress PO selama lebih dari 1 bulan.'
-            : 'Belum ada invoice atau progress PO selama lebih dari 1 bulan.',
+            ? 'Tidak ada aktivitas pembayaran selama 30 hari.'
+            : 'Belum ada aktivitas pembayaran selama 30 hari.',
           'url' => PurchaseOrderResource::getUrl('view', ['record' => $purchaseOrder]),
         ];
       });
+  }
+
+  private function staleProjectAttention(Collection $projects): Collection
+  {
+    $staleSince = now()->subDays(30);
+
+    return $projects
+      ->filter(function (Project $project) use ($staleSince): bool {
+        $lastProgress = $project->progresses->sortByDesc('waktu_progres')->first();
+        $lastActivity = $lastProgress?->waktu_progres ?? $project->created_at;
+
+        return $lastActivity !== null && Carbon::parse($lastActivity)->lte($staleSince);
+      })
+      ->map(function (Project $project): array {
+        $lastProgress = $project->progresses->sortByDesc('waktu_progres')->first();
+        $lastActivity = $lastProgress?->waktu_progres ?? $project->created_at;
+
+        return [
+          'severity' => 'WARNING',
+          'title' => $project->nama_project,
+          'date' => Carbon::parse($lastActivity)->timestamp,
+          'detail' => $lastProgress
+            ? 'Tidak ada project progress selama 30 hari.'
+            : 'Belum ada project progress selama 30 hari.',
+          'url' => ProjectResource::getUrl('view', ['record' => $project]),
+        ];
+      });
+  }
+
+  private function projectHighlights(Collection $summaries): Collection
+  {
+    $withProjects = $summaries->filter(fn(ProjectSummary $summary) => $summary->project !== null);
+    $highestProfit = $withProjects->sortByDesc(fn(ProjectSummary $summary) => $summary->final_profit)->first();
+    $highestExpenditure = $withProjects->sortByDesc(fn(ProjectSummary $summary) => $summary->ml_expenditure)->first();
+
+    return collect([
+      $highestProfit ? [
+        'label' => 'HIGHEST PROFIT',
+        'title' => $highestProfit->project_name,
+        'value' => $this->money($highestProfit->final_profit),
+        'detail' => 'Profit project tertinggi.',
+        'tone' => 'success',
+        'url' => ProjectSummaryResource::getUrl('view', ['record' => $highestProfit]),
+      ] : null,
+      $highestExpenditure ? [
+        'label' => 'HIGHEST EXPENDITURE',
+        'title' => $highestExpenditure->project_name,
+        'value' => $this->money($highestExpenditure->ml_expenditure),
+        'detail' => 'Pengeluaran project tertinggi.',
+        'tone' => 'danger',
+        'url' => ProjectSummaryResource::getUrl('view', ['record' => $highestExpenditure]),
+      ] : null,
+    ])->filter()->values();
+  }
+
+  private function comparison(float|int $current, float|int $previous): array
+  {
+    $current = (float) $current;
+    $previous = (float) $previous;
+
+    if ($previous === 0.0) {
+      return [
+        'direction' => $current === 0.0 ? 'same' : 'new',
+        'label' => $current === 0.0 ? '0% vs last month' : 'New vs last month',
+      ];
+    }
+
+    $change = (($current - $previous) / abs($previous)) * 100;
+    $direction = $change > 0 ? 'up' : ($change < 0 ? 'down' : 'same');
+    $prefix = $change > 0 ? '+' : '';
+
+    return [
+      'direction' => $direction,
+      'label' => $prefix . number_format($change, 1) . '% vs last month',
+    ];
+  }
+
+  private function chartPayload(Collection $points): array
+  {
+    $max = max(1, (float) $points->max(fn(array $point): float => max($point['po'], $point['profit'], $point['expenditure'])));
+
+    return [
+      'points' => $points->values(),
+      'max' => $max,
+      'axis' => [$this->money($max), $this->money($max / 2), 'Rp 0'],
+    ];
+  }
+
+  private function purchaseOrderProgressPercentage(PurchaseOrder $purchaseOrder): string
+  {
+    $grandTotal = (float) $purchaseOrder->grand_total;
+
+    if ($grandTotal <= 0) {
+      return '0%';
+    }
+
+    return number_format(min(100, ($purchaseOrder->progresses->sum('amount') / $grandTotal) * 100), 0) . '%';
+  }
+
+  private function projectStatus(Project $project): string
+  {
+    $progress = $project->progresses->sortByDesc('waktu_progres')->first();
+
+    return match (true) {
+      !$progress => 'Belum dimulai',
+      (float) $progress->persentase >= 100 => 'Selesai',
+      Carbon::parse($progress->waktu_progres)->lt(now()->subMonth()) => 'Perlu review',
+      default => 'On Track',
+    };
+  }
+
+  private function projectStatusTone(Project $project): string
+  {
+    return match ($this->projectStatus($project)) {
+      'Selesai', 'On Track' => 'success',
+      'Perlu review' => 'warning',
+      default => 'neutral',
+    };
   }
 
   private function money(float|int|string $amount): string

@@ -1,160 +1,385 @@
 <x-filament-panels::page>
-  @php($data = $this->dashboardData())
-  <div class="space-y-6">
-    {{-- Header --}}
-    <div
-      class="flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-end sm:justify-between">
+  @php
+    $data = $this->dashboardData();
+  @endphp
+
+  <div class="trace-dashboard">
+    <header class="trace-dashboard__header">
       <div>
-        <p class="text-sm font-medium text-primary-600 dark:text-primary-400">TRACE TKJ</p>
-        <h1 class="mt-0.5 text-2xl font-bold tracking-tight text-gray-950 dark:text-white">Monitoring Project</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pantau project, PO, progress, dan kondisi finansial.
-        </p>
+        <div class="trace-dashboard__eyebrow"><span class="trace-dashboard__pulse"></span> TRACE TKJ / OVERVIEW</div>
+        <h1>Monitoring Project</h1>
+        <p>Pantau project, PO, progress, dan kondisi finansial secara real-time.</p>
       </div>
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-          <span>Sumber Project</span>
-          <select wire:model.live="source"
-            class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm transition focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:w-44">
+    </header>
+
+    <div class="trace-dashboard__toolbar">
+      <div class="trace-dashboard__alert"><x-filament::icon
+          icon="heroicon-m-exclamation-triangle" /><strong>{{ $data['attention']->count() }}</strong> perlu perhatian
+      </div>
+      <span class="trace-dashboard__toolbar-copy">{{ $data['sourceLabel'] }} · {{ $data['periodLabel'] }}</span>
+      <div class="trace-dashboard__filters">
+        @if ($this->canChooseSource())
+          <select wire:model.live="source" aria-label="Sumber project">
             @foreach ($this->sourceOptions() as $value => $label)
               <option value="{{ $value }}">{{ $label }}</option>
             @endforeach
           </select>
-        </label>
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-          <span>Periode</span>
-          <select wire:model.live="period"
-            class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm transition focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:w-36">
-            @foreach ($this->periodOptions() as $value => $label)
-              <option value="{{ $value }}">{{ $label }}</option>
-            @endforeach
-          </select>
-        </label>
+        @endif
+        <select wire:model.live="period" aria-label="Periode dashboard">
+          @foreach ($this->periodOptions() as $value => $label)
+            <option value="{{ $value }}">{{ $label }}</option>
+          @endforeach
+        </select>
         <button type="button" wire:click="refreshDashboard" wire:loading.attr="disabled" wire:target="refreshDashboard"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 text-sm font-semibold text-white transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:focus:ring-white dark:focus:ring-offset-gray-900">
-          <span wire:loading.remove wire:target="refreshDashboard">Refresh</span>
-          <span wire:loading wire:target="refreshDashboard">Memuat…</span>
+          class="trace-dashboard__refresh" title="Refresh dashboard" aria-label="Refresh dashboard">
+          <x-filament::icon icon="heroicon-m-arrow-path" wire:loading.remove wire:target="refreshDashboard" />
+          <x-filament::icon icon="heroicon-m-arrow-path" class="animate-spin" wire:loading
+            wire:target="refreshDashboard" />
         </button>
       </div>
     </div>
 
-    {{-- Empty state --}}
     @if (!$data['hasData'])
-      <div
-        class="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center dark:border-gray-700 dark:bg-gray-900">
-        <p class="font-semibold text-gray-950 dark:text-white">No project data available.</p>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Data akan muncul setelah project atau purchase order
-          tersedia.</p>
-      </div>
+      <div class="trace-dashboard__empty">Belum ada data project atau purchase order.</div>
     @endif
 
-    {{-- KPI cards --}}
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section class="trace-dashboard__kpis" aria-label="Ringkasan metrik">
       @foreach ($data['kpis'] as $kpi)
-        <a href="{{ $kpi['url'] }}"
-          class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-800 dark:bg-gray-900">
-          <p class="text-sm text-gray-500 dark:text-gray-400">{{ $kpi['label'] }}</p>
-          <p class="mt-3 text-2xl font-bold tabular-nums text-gray-950 dark:text-white">{{ $kpi['value'] }}</p>
-          <p
-            class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary-600 transition group-hover:gap-1.5 dark:text-primary-400">
-            Lihat detail <span aria-hidden="true">→</span>
-          </p>
+        <a href="{{ $kpi['url'] }}" class="trace-kpi trace-kpi--{{ $kpi['tone'] }}">
+          <div class="trace-kpi__top"><span>{{ $kpi['label'] }}</span><x-filament::icon
+              icon="heroicon-m-arrow-up-right" /></div>
+          <strong>{{ $kpi['value'] }}</strong>
+          <small class="trace-kpi__comparison trace-kpi__comparison--{{ $kpi['comparison']['direction'] }}">
+            <span class="trace-kpi__delta">{{ $kpi['comparison']['direction'] === 'down' ? '↘' : '↗' }}</span>
+            {{ $kpi['comparison']['label'] }}
+          </small>
         </a>
       @endforeach
-    </div>
+      <div class="trace-kpi trace-kpi--violet">
+        <div class="trace-kpi__top"><span>Utilization</span><x-filament::icon icon="heroicon-m-chart-bar" /></div>
+        <strong>{{ $data['utilization'] }}<small>%</small></strong>
+        <small>budget terpakai</small>
+      </div>
+    </section>
 
-    {{-- Financial + progress --}}
-    <div class="grid gap-6 xl:grid-cols-2">
-      <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 class="text-base font-semibold text-gray-950 dark:text-white">Financial overview</h2>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
-          @foreach ($data['financial'] as $label => $value)
-            <div class="border-l-2 border-primary-500 pl-3">
-              <p class="text-sm text-gray-500 dark:text-gray-400">{{ $label }}</p>
-              <p class="mt-1 font-semibold tabular-nums text-gray-950 dark:text-white">{{ $value }}</p>
+    <div class="trace-dashboard__main-grid">
+      <section class="trace-panel trace-panel--chart">
+        <div class="trace-panel__heading">
+          <div>
+            <h2>Profit & Expenditure History</h2>
+            <p>Kumulatif historis data untuk melihat perubahan dari waktu ke waktu</p>
+          </div>
+          <div class="trace-segmented" data-chart-ranges>
+            <button class="is-active" type="button" data-chart-range="3m">3M</button>
+            <button type="button" data-chart-range="6m">6M</button>
+            <button type="button" data-chart-range="1y">1Y</button>
+            <button type="button" data-chart-range="all">All</button>
+          </div>
+        </div>
+        <div class="trace-legend">
+          <span class="trace-legend__profit">Profit</span>
+          <span class="trace-legend__expense">Expenditure</span>
+          <span class="trace-legend__invoice">Nilai PO</span>
+        </div>
+        <div class="trace-chart" data-trace-chart>
+          @foreach ($data['chartRanges'] as $range => $rangeData)
+            @php
+              $rangePoints = $rangeData['points'];
+              $rangeMax = $rangeData['max'] > 0 ? $rangeData['max'] : 1; // Mencegah division by zero
+              $axisLabels = $rangeData['axis'];
+              $pointX = fn($index) => $rangePoints->count() > 1
+                  ? ($index * 996) / ($rangePoints->count() - 1) + 12
+                  : 510;
+
+              $linePoints = fn($key) => $rangePoints
+                  ->map(fn($point, $index) => $pointX($index) . ',' . (190 - ($point[$key] / $rangeMax) * 150))
+                  ->implode(' ');
+
+              // Menentukan lebar bar agar responsif terhadap jumlah data
+              $barWidth = $rangePoints->count() > 12 ? 16 : 32;
+            @endphp
+            <div class="trace-chart__range" data-chart-panel="{{ $range }}"
+              @if ($range !== '3m') hidden @endif>
+              <div class="trace-chart__body">
+                <div class="trace-chart__axis">
+                  @foreach ($axisLabels as $axisLabel)
+                    <span>{{ $axisLabel }}</span>
+                  @endforeach
+                </div>
+                <svg viewBox="0 0 1020 230" role="img" aria-label="Grafik profit, expenditure dan nilai PO"
+                  preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="traceChartFill-{{ $range }}" x1="0" x2="0"
+                      y1="0" y2="1">
+                      <stop offset="0" stop-color="currentColor" stop-opacity=".22" />
+                      <stop offset="1" stop-color="currentColor" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
+                  @for ($line = 0; $line < 4; $line++)
+                    <line x1="0" y1="{{ 40 + $line * 50 }}" x2="1020" y2="{{ 40 + $line * 50 }}"
+                      class="trace-chart__grid" />
+                  @endfor
+
+                  <polyline points="0,190 {{ $linePoints('profit') }} 1020,190" class="trace-chart__area"
+                    style="fill: url(#traceChartFill-{{ $range }})" />
+                  <polyline points="{{ $linePoints('profit') }}" class="trace-chart__line trace-chart__line--profit" />
+                  <polyline points="{{ $linePoints('expenditure') }}"
+                    class="trace-chart__line trace-chart__line--expense" />
+
+                  <!-- Hapus polyline PO di sini -->
+
+                  @foreach ($rangePoints as $index => $point)
+                    @php
+                      $x = $pointX($index);
+                      $poHeight = ($point['po'] / $rangeMax) * 150;
+                      $poY = 190 - $poHeight;
+                    @endphp
+
+                    <!-- Bar untuk Nilai PO -->
+                    <rect x="{{ $x - $barWidth / 2 }}" y="{{ $poY }}" width="{{ $barWidth }}"
+                      height="{{ $poHeight }}" class="trace-chart__bar trace-chart__bar--po" data-chart-point
+                      data-label="{{ $point['label'] }}" data-profit="{{ $point['profit'] }}"
+                      data-expenditure="{{ $point['expenditure'] }}" data-po="{{ $point['po'] }}" rx="4"
+                      ry="4" style="opacity: 0.8; cursor: pointer;" />
+
+                    <!-- Titik untuk Profit & Expenditure -->
+                    <circle cx="{{ $x }}" cy="{{ 190 - ($point['profit'] / $rangeMax) * 150 }}" r="4"
+                      class="trace-chart__point trace-chart__point--profit" data-chart-point
+                      data-label="{{ $point['label'] }}" data-profit="{{ $point['profit'] }}"
+                      data-expenditure="{{ $point['expenditure'] }}" data-po="{{ $point['po'] }}" />
+
+                    <circle cx="{{ $x }}" cy="{{ 190 - ($point['expenditure'] / $rangeMax) * 150 }}"
+                      r="4" class="trace-chart__point trace-chart__point--expense" data-chart-point
+                      data-label="{{ $point['label'] }}" data-profit="{{ $point['profit'] }}"
+                      data-expenditure="{{ $point['expenditure'] }}" data-po="{{ $point['po'] }}" />
+                  @endforeach
+                </svg>
+              </div>
+              <div class="trace-chart__labels"
+                style="grid-template-columns: repeat({{ max(1, $rangePoints->count()) }}, minmax(0, 1fr));">
+                @foreach ($rangePoints as $point)
+                  <span>{{ $point['label'] }}</span>
+                @endforeach
+              </div>
             </div>
           @endforeach
+          <div class="trace-chart__tooltip" data-chart-tooltip hidden></div>
         </div>
       </section>
-      <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 class="text-base font-semibold text-gray-950 dark:text-white">
-          Progress & Pengeluaran
-          <span class="font-normal text-gray-500 dark:text-gray-400">({{ $data['periodLabel'] }})</span>
-        </h2>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
-          @foreach (array_merge($data['progress'], $data['expenditure']) as $label => $value)
-            <div class="border-l-2 border-amber-500 pl-3">
-              <p class="text-sm text-gray-500 dark:text-gray-400">{{ $label }}</p>
-              <p class="mt-1 font-semibold tabular-nums text-gray-950 dark:text-white">{{ $value }}</p>
+
+      <section class="trace-panel trace-panel--highlights">
+        <div class="trace-panel__heading">
+          <div>
+            <h2>Project Highlights</h2>
+            <p>Top performance this month</p>
+          </div><a href="#attention">View all</a>
+        </div>
+        @forelse ($data['highlights'] as $item)
+          <a href="{{ $item['url'] }}" class="trace-highlight trace-highlight--{{ $item['tone'] }}"><span
+              class="trace-highlight__mark">●</span>
+            <div>
+              <small>{{ $item['label'] }}</small><strong>{{ $item['title'] }}</strong>
+              <p>{{ $item['value'] }} · {{ $item['detail'] }}</p>
             </div>
-          @endforeach
-        </div>  
+          </a>
+        @empty
+          <div class="trace-dashboard__mini-empty">Belum ada project highlight.</div>
+        @endforelse
       </section>
     </div>
 
-    {{-- Attention required --}}
-    <section class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-        <h2 class="text-base font-semibold text-gray-950 dark:text-white">Perlu Perhaitan</h2>
+    <section class="trace-panel trace-attention-panel" id="attention">
+      <div class="trace-panel__heading">
+        <div>
+          <h2>Perlu Perhatian</h2>
+          <p>Project atau PO tanpa aktivitas pembayaran/progress selama 30 hari</p>
+        </div>
+        <span class="trace-badge trace-badge--warning">{{ $data['attention']->count() }} item</span>
       </div>
-      <div class="divide-y divide-gray-100 dark:divide-gray-800">
+      <div class="trace-attention-list">
         @forelse ($data['attention'] as $item)
-          <a href="{{ $item['url'] }}"
-            class="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:hover:bg-gray-800">
-            <div class="min-w-0">
-              <span
-                class="inline-flex rounded-full bg-danger-50 px-2 py-0.5 text-xs font-bold text-danger-600 dark:bg-danger-500/10 dark:text-danger-400">{{ $item['severity'] }}</span>
-              <p class="mt-1.5 truncate font-medium text-gray-950 dark:text-white">{{ $item['title'] }}</p>
-              <p class="truncate text-sm text-gray-500 dark:text-gray-400">{{ $item['detail'] }}</p>
-            </div>
-            <span class="shrink-0 text-sm font-semibold text-primary-600 dark:text-primary-400">View</span>
+          <a href="{{ $item['url'] }}" class="trace-attention-item">
+            <span class="trace-attention-item__dot"></span>
+            <span><strong>{{ $item['title'] }}</strong><small>{{ $item['detail'] }}</small></span>
+            <x-filament::icon icon="heroicon-m-arrow-up-right" />
           </a>
         @empty
-          <p class="px-5 py-8 text-sm text-gray-500 dark:text-gray-400">Tidak ada kondisi perhatian berdasarkan rule
-            yang tersedia.</p>
+          <div class="trace-dashboard__mini-empty">Tidak ada project atau PO yang melewati batas 30 hari.</div>
         @endforelse
       </div>
     </section>
 
-    {{-- Recent projects + orders --}}
-    <div class="grid gap-6 xl:grid-cols-2">
-      <section class="min-w-0 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2
-          class="border-b border-gray-200 px-5 py-4 text-base font-semibold text-gray-950 dark:border-gray-800 dark:text-white">
-          Project Terbaru</h2>
-        <div class="divide-y divide-gray-100 dark:divide-gray-800">
-          @forelse ($data['recentProjects'] as $item)
-            <a href="{{ $item['url'] }}"
-              class="flex min-w-0 items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:hover:bg-gray-800">
-              <div class="min-w-0">
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $item['label'] }} · {{ $item['date'] }}</p>
-                <p class="mt-1 wrap-break-word font-medium text-gray-950 dark:text-white">{{ $item['title'] }}</p>
-              </div>
-              <span class="shrink-0 text-sm font-semibold text-primary-600 dark:text-primary-400">View</span>
-            </a>
-          @empty
-            <p class="px-5 py-8 text-sm text-gray-500 dark:text-gray-400">No project data available.</p>
-          @endforelse
+    <div class="trace-dashboard__summary-grid">
+      <section class="trace-panel">
+        <div class="trace-panel__heading">
+          <div>
+            <h2>Financial Overview</h2>
+            <p>Reconciled totals</p>
+          </div>
+        </div>
+        <div class="trace-financial-total"><small>Total Nilai
+            PO</small><strong>{{ $data['financial']['Total Nilai PO'] }}</strong></div>
+        <div class="trace-stacked-bar">
+          @foreach ($data['financialMix'] as $bar)
+            <span class="trace-stacked-bar__{{ $bar['tone'] }}" style="width: {{ $bar['percentage'] }}%"
+              title="{{ $bar['label'] }}: {{ $bar['percentage'] }}%"><b>{{ $bar['percentage'] }}%</b></span>
+          @endforeach
+        </div>
+        <div class="trace-stacked-legend">
+          @foreach ($data['financialMix'] as $bar)
+            <span><i class="trace-stacked-bar__{{ $bar['tone'] }}"></i>{{ $bar['label'] }}
+              {{ $bar['percentage'] }}%</span>
+          @endforeach
+        </div>
+        <div class="trace-metrics"><span>Balance <strong>{{ $data['financial']['Balance'] }}</strong></span><span>Sisa
+            Budget <strong>{{ $data['financial']['Sisa Budget'] }}</strong></span><span>Pengeluaran
+            <strong>{{ $data['financial']['Pengeluaran'] }}</strong></span></div>
+      </section>
+      <section class="trace-panel">
+        <div class="trace-panel__heading">
+          <div>
+            <h2>Progress & Pengeluaran</h2>
+            <p>{{ $data['periodLabel'] }} · {{ $data['progress']['Persentase Invoice'] }} average</p>
+          </div>
+        </div>
+        <div class="trace-progress-list"><span>Invoice / PO progress
+            <strong>{{ $data['progress']['Persentase Invoice'] }}</strong></span>
+          <div><i
+              style="width: {{ min(100, (float) str_replace(',', '.', str_replace('%', '', $data['progress']['Persentase Invoice']))) }}%"></i>
+          </div><span>Monthly invoice activity <strong>{{ $data['progress']['Monthly Invoice'] }}</strong></span>
+          <div><i class="trace-progress-list__expense"
+              style="width: {{ min(100, (float) str_replace(',', '.', str_replace('%', '', $data['progress']['Monthly Invoice']))) }}%"></i>
+          </div>
+          <span>Material allocation <strong>{{ $data['expenditure']['Material']['amount'] }}
+              ({{ $data['expenditure']['Material']['percentage'] }}%)</strong></span>
+          <div><i style="width: {{ $data['expenditure']['Material']['percentage'] }}%"></i></div>
+          <span>Labour allocation <strong>{{ $data['expenditure']['Labour']['amount'] }}
+              ({{ $data['expenditure']['Labour']['percentage'] }}%)</strong></span>
+          <div><i class="trace-progress-list__labour"
+              style="width: {{ $data['expenditure']['Labour']['percentage'] }}%"></i></div>
         </div>
       </section>
-      <section class="min-w-0 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2
-          class="border-b border-gray-200 px-5 py-4 text-base font-semibold text-gray-950 dark:border-gray-800 dark:text-white">
-          Purchase Order Terbaru</h2>
-        <div class="divide-y divide-gray-100 dark:divide-gray-800">
-          @forelse ($data['recentOrders'] as $item)
-            <a href="{{ $item['url'] }}"
-              class="flex min-w-0 items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:hover:bg-gray-800">
-              <div class="min-w-0">
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $item['label'] }} · {{ $item['date'] }}</p>
-                <p class="mt-1 wrap-break-word font-medium text-gray-950 dark:text-white">{{ $item['title'] }}</p>
-              </div>
-              <span class="shrink-0 text-sm font-semibold text-primary-600 dark:text-primary-400">View</span>
-            </a>
-          @empty
-            <p class="px-5 py-8 text-sm text-gray-500 dark:text-gray-400">No purchase order data available.</p>
-          @endforelse
+    </div>
+
+    <div class="trace-dashboard__tables">
+      <section class="trace-panel trace-table-panel">
+        <div class="trace-table-panel__heading">
+          <h2>Project Terbaru</h2><a
+            href="{{ \App\Filament\Resources\Projects\ProjectResource::getUrl('index') }}">View all →</a>
+        </div>
+        <div class="trace-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Project</th>
+                <th>Location</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              @forelse ($data['recentProjects'] as $item)
+                <tr>
+                  <td>{{ $item['date'] }}</td>
+                  <td><a href="{{ $item['url'] }}">{{ $item['title'] }}</a></td>
+                  <td><span class="trace-status trace-status--neutral">{{ $item['location'] }}</span></td>
+                  <td>—</td>
+                </tr>
+              @empty
+                <tr>
+                  <td colspan="4">Belum ada project terbaru.</td>
+                </tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="trace-panel trace-table-panel">
+        <div class="trace-table-panel__heading">
+          <h2>Purchase Order Terbaru</h2><a
+            href="{{ \App\Filament\Resources\PurchaseOrders\PurchaseOrderResource::getUrl('index') }}">View all →</a>
+        </div>
+        <div class="trace-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>PO Number</th>
+                <th>Progress</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              @forelse ($data['recentOrders'] as $item)
+                <tr>
+                  <td>{{ $item['date'] }}</td>
+                  <td><a href="{{ $item['url'] }}">{{ $item['title'] }}</a></td>
+                  <td><span class="trace-status trace-status--success">{{ $item['progress'] }}</span></td>
+                  <td>{{ $item['value'] }}</td>
+                </tr>
+              @empty
+                <tr>
+                  <td colspan="4">Belum ada purchase order terbaru.</td>
+                </tr>
+              @endforelse
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
   </div>
 </x-filament-panels::page>
+
+<script>
+  if (!window.traceDashboardChartBound) {
+    window.traceDashboardChartBound = true;
+
+    const formatChartValue = (value) => new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0,
+    }).format(Number(value));
+
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-chart-range]');
+      if (!button) return;
+
+      const chart = button.closest('.trace-panel--chart');
+      const range = button.dataset.chartRange;
+      chart.querySelectorAll('[data-chart-range]').forEach((item) => item.classList.toggle('is-active', item ===
+        button));
+      chart.querySelectorAll('[data-chart-panel]').forEach((panel) => {
+        panel.hidden = panel.dataset.chartPanel !== range;
+      });
+    });
+
+    document.addEventListener('mousemove', (event) => {
+      const panel = event.target.closest('[data-chart-panel]');
+      if (!panel || panel.hidden) return;
+
+      const chart = panel.querySelector('svg');
+      const points = [...panel.querySelectorAll('[data-chart-point]')];
+      if (!chart || !points.length) return;
+
+      const bounds = chart.getBoundingClientRect();
+      const viewBoxX = ((event.clientX - bounds.left) / bounds.width) * 1020;
+      const closestX = points.reduce((closest, point) => Math.abs(Number(point.getAttribute('cx')) - viewBoxX) <
+        Math.abs(Number(closest.getAttribute('cx')) - viewBoxX) ? point : closest);
+      const tooltip = panel.closest('.trace-chart').querySelector('[data-chart-tooltip]');
+      const pointRect = closestX.getBoundingClientRect();
+      const chartRect = panel.closest('.trace-chart').getBoundingClientRect();
+
+      tooltip.innerHTML =
+        `<strong>${closestX.dataset.label}</strong><span><i class="trace-tooltip__profit"></i>Profit ${formatChartValue(closestX.dataset.profit)}</span><span><i class="trace-tooltip__expense"></i>Expenditure ${formatChartValue(closestX.dataset.expenditure)}</span><span><i class="trace-tooltip__po"></i>Nilai PO ${formatChartValue(closestX.dataset.po)}</span>`;
+      tooltip.style.left =
+        `${Math.min(chartRect.width - 180, Math.max(8, pointRect.left - chartRect.left - 85))}px`;
+      tooltip.style.top = `${Math.max(8, pointRect.top - chartRect.top - 112)}px`;
+      tooltip.hidden = false;
+    });
+
+    document.addEventListener('mouseleave', (event) => {
+      const chart = event.target.closest('[data-trace-chart]');
+      if (chart) chart.querySelector('[data-chart-tooltip]').hidden = true;
+    }, true);
+  }
+</script>
