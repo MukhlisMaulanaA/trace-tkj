@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
 
     $this->seedProjectAlpha();
     $this->seedProjectBeta();
+    $this->call(DashboardDemoSeeder::class);
   }
 
   private function seedProjectAlpha(): void
@@ -241,6 +242,7 @@ class DatabaseSeeder extends Seeder
 
   private function seedExpenditures(Project $project, array $expenditures): void
   {
+    /** @var ProjectSummary|null $summary */
     $summary = $project->summary()->first();
 
     if (!$summary) {
@@ -251,6 +253,7 @@ class DatabaseSeeder extends Seeder
       ]);
     }
 
+    /** @var ProjectSummary $summary */
     $summary->expenditures()->delete();
 
     foreach ($expenditures as [$type, $description, $amount, $date]) {

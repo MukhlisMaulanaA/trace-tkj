@@ -216,15 +216,15 @@ html.dark .trace-dashboard {
 
 .trace-dashboard__kpis {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
 .trace-kpi {
   position: relative;
-  min-height: 92px;
+  min-height: 180px;
   overflow: hidden;
-  padding: 12px 13px;
+  padding: 10px 18px 8px;
   border: 1px solid var(--trace-line);
   border-radius: 8px;
   background: var(--trace-surface);
@@ -278,9 +278,9 @@ html.dark .trace-dashboard {
 
 .trace-kpi strong {
   display: block;
-  margin-top: 9px;
+  margin-top: 10px;
   color: var(--trace-text);
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 700;
 }
 
@@ -289,16 +289,50 @@ html.dark .trace-dashboard {
 }
 
 .trace-kpi>small {
-  display: block;
-  margin-top: 6px;
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
   color: var(--trace-muted);
-  font-size: 8px;
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .trace-kpi__delta {
+  align-items: center;
+  background: color-mix(in srgb, var(--trace-green) 16%, transparent);
+  border-radius: 5px;
   color: var(--trace-green);
+  display: inline-flex;
+  min-height: 24px;
+  padding: 0 8px;
   font-weight: 700;
 }
+
+.trace-kpi__value {
+  line-height: 1.15;
+}
+
+.trace-kpi__sparkline {
+  bottom: 8px;
+  height: 28px;
+  left: 18px;
+  position: absolute;
+  right: 18px;
+  width: calc(100% - 36px);
+}
+
+.trace-kpi__sparkline polyline {
+  fill: none;
+  stroke: var(--trace-blue);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.trace-kpi--indigo .trace-kpi__sparkline polyline { stroke: #a88cff; }
+.trace-kpi--amber .trace-kpi__sparkline polyline { stroke: var(--trace-amber); }
+.trace-kpi--emerald .trace-kpi__sparkline polyline { stroke: var(--trace-green); }
 
 .trace-dashboard__main-grid {
   display: grid;
@@ -478,17 +512,27 @@ html.dark .trace-dashboard {
 
 .trace-highlight__mark {
   color: var(--trace-red);
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .trace-highlight--warning .trace-highlight__mark {
   color: var(--trace-amber);
 }
 
+.trace-highlight--success .trace-highlight__mark,
+.trace-highlight--success small {
+  color: var(--trace-green);
+}
+
+.trace-highlight--danger .trace-highlight__mark,
+.trace-highlight--danger small {
+  color: var(--trace-red);
+}
+
 .trace-highlight small {
   display: block;
-  color: var(--trace-red);
-  font-size: 7px;
+  /* color: var(--trace-red); */
+  font-size: 12px !important;
   font-weight: 700;
   letter-spacing: .08em;
 }
@@ -503,10 +547,24 @@ html.dark .trace-dashboard {
   font-size: 10px;
 }
 
-.trace-highlight p {
-  margin: 3px 0 0;
+.trace-highlight span.trace-highlight__location {
   color: var(--trace-muted);
-  font-size: 8px;
+  font-size: 10px;
+}
+
+.trace-highlight p.trace-highlight__value--success {
+  margin: 3px 0 0;
+  color: var(--trace-green);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.trace-highlight p.trace-highlight__value--danger {
+  margin: 3px 0 0;
+  color: var(--trace-red);
+  font-size: 18px;
+  font-weight: 700;
   line-height: 1.4;
 }
 
@@ -533,18 +591,6 @@ html.dark .trace-dashboard {
   margin: 0 14px 10px;
   overflow: hidden;
   border-radius: 4px;
-}
-
-.trace-stacked-bar span:nth-child(1) {
-  background: var(--trace-blue);
-}
-
-.trace-stacked-bar span:nth-child(2) {
-  background: var(--trace-green);
-}
-
-.trace-stacked-bar span:nth-child(3) {
-  background: var(--trace-red);
 }
 
 .trace-metrics {
@@ -723,10 +769,6 @@ html.dark .trace-dashboard {
 
   .trace-dashboard__kpis {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .trace-kpi:last-child {
-    grid-column: span 2;
   }
 
   .trace-panel__heading {
@@ -1068,8 +1110,8 @@ html.dark .trace-dashboard {
 }
 
 .trace-kpi {
-  min-height: 126px;
-  padding: 17px 18px;
+  min-height: 180px;
+  padding: 14px 18px 11px;
 }
 
 .trace-kpi__top {
@@ -1081,8 +1123,8 @@ html.dark .trace-dashboard {
 }
 
 .trace-kpi strong {
-  margin-top: 14px;
-  font-size: 24px;
+  margin-top: 15px;
+  font-size: 28px;
 }
 
 .trace-kpi strong small {
@@ -1405,10 +1447,6 @@ html.dark .trace-dashboard {
 @media (max-width: 420px) {
   .trace-dashboard__kpis {
     grid-template-columns: 1fr;
-  }
-
-  .trace-kpi:last-child {
-    grid-column: auto;
   }
 
   .trace-dashboard__filters {

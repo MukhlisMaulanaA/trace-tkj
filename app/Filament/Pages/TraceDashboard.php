@@ -150,10 +150,10 @@ class TraceDashboard extends Dashboard
       'sourceLabel' => $this->sourceOptions()[$source] ?? 'Semua Sumber',
       'periodLabel' => $this->periodOptions()[$this->period] ?? 'Bulan ini',
       'kpis' => [
-        ['label' => 'Total Project', 'value' => number_format($projects->count()), 'comparison' => $this->comparison($projects->count(), $previousProjects->count()), 'tone' => 'blue', 'url' => ProjectResource::getUrl('index')],
-        ['label' => 'Total Purchase Order', 'value' => number_format($purchaseOrders->count()), 'comparison' => $this->comparison($purchaseOrders->count(), $previousOrders->count()), 'tone' => 'indigo', 'url' => PurchaseOrderResource::getUrl('index')],
-        ['label' => 'Total Nilai PO', 'value' => $this->money($commitmentValue), 'comparison' => $this->comparison($commitmentValue, $previousOrders->sum('grand_total')), 'tone' => 'amber', 'url' => ProjectSummaryResource::getUrl('index')],
-        ['label' => 'Final Profit', 'value' => $this->money($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit)), 'comparison' => $this->comparison($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit), $previousSummaries->sum(fn(ProjectSummary $summary) => $summary->final_profit)), 'tone' => 'emerald', 'url' => ProjectSummaryResource::getUrl('index')],
+        ['label' => 'Total Project', 'value' => number_format($projects->count()), 'comparison' => $this->comparison($projects->count(), $previousProjects->count(), 'count'), 'tone' => 'blue', 'url' => ProjectResource::getUrl('index')],
+        ['label' => 'Total PO', 'value' => number_format($purchaseOrders->count()), 'comparison' => $this->comparison($purchaseOrders->count(), $previousOrders->count(), 'count'), 'tone' => 'indigo', 'url' => PurchaseOrderResource::getUrl('index')],
+        ['label' => 'Nilai PO', 'value' => $this->compactMoney($commitmentValue), 'comparison' => $this->comparison($commitmentValue, $previousOrders->sum('grand_total'), 'percentage'), 'tone' => 'amber', 'url' => ProjectSummaryResource::getUrl('index')],
+        ['label' => 'Profit', 'value' => $this->compactMoney($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit)), 'comparison' => $this->comparison($summaries->sum(fn(ProjectSummary $summary) => $summary->final_profit), $previousSummaries->sum(fn(ProjectSummary $summary) => $summary->final_profit), 'percentage'), 'tone' => 'emerald', 'url' => ProjectSummaryResource::getUrl('index')],
       ],
       'financial' => [
         'Total Nilai PO' => $this->money($commitmentValue),
@@ -168,18 +168,15 @@ class TraceDashboard extends Dashboard
         'Persentase Invoice' => number_format($invoicePercentage, 2) . '%',
         'Monthly Invoice' => $commitmentValue > 0 ? number_format(($invoiceValue / $commitmentValue) * 100, 2) . '%' : '0.00%',
       ],  
-      'utilization' => $commitmentValue > 0
-        ? min(100, round(($expenditures->sum('amount') / $commitmentValue) * 100))
-        : 0,
       'chart' => [
         'points' => $chart,
         'max' => $chartMax,
       ],
       'chartRanges' => $chartRanges,
       'financialMix' => [
-        ['label' => 'Pengeluaran', 'percentage' => round(($expenditureTotal / $financialMixTotal) * 100), 'tone' => 'blue'],
+        ['label' => 'Pengeluaran', 'percentage' => round(($expenditureTotal / $financialMixTotal) * 100), 'tone' => 'red'],
         ['label' => 'Profit', 'percentage' => round(($profitTotal / $financialMixTotal) * 100), 'tone' => 'green'],
-        ['label' => 'Sisa Budget', 'percentage' => round(($remainingBudgetTotal / $financialMixTotal) * 100), 'tone' => 'red'],
+        ['label' => 'Sisa Budget', 'percentage' => round(($remainingBudgetTotal / $financialMixTotal) * 100), 'tone' => 'blue'],
       ],
       'expenditure' => [
         'Material' => ['amount' => $this->money($materialTotal), 'percentage' => $expenditureTotal > 0 ? round(($materialTotal / $expenditureTotal) * 100) : 0],
@@ -298,16 +295,18 @@ class TraceDashboard extends Dashboard
 
     return collect([
       $highestProfit ? [
-        'label' => 'HIGHEST PROFIT',
+        'label' => 'PROFIT TERTINGGI',
         'title' => $highestProfit->project_name,
+        'location' => $highestProfit->project->lokasi,
         'value' => $this->money($highestProfit->final_profit),
         'detail' => 'Profit project tertinggi.',
         'tone' => 'success',
         'url' => ProjectSummaryResource::getUrl('view', ['record' => $highestProfit]),
       ] : null,
       $highestExpenditure ? [
-        'label' => 'HIGHEST EXPENDITURE',
+        'label' => 'PENGELUARAN TERBANYAK',
         'title' => $highestExpenditure->project_name,
+        'location' => $highestExpenditure->project->lokasi,
         'value' => $this->money($highestExpenditure->ml_expenditure),
         'detail' => 'Pengeluaran project tertinggi.',
         'tone' => 'danger',
@@ -316,25 +315,25 @@ class TraceDashboard extends Dashboard
     ])->filter()->values();
   }
 
-  private function comparison(float|int $current, float|int $previous): array
+  private function comparison(float|int $current, float|int $previous, string $unit): array
   {
     $current = (float) $current;
     $previous = (float) $previous;
+    $difference = $current - $previous;
+    $direction = $difference > 0 ? 'up' : ($difference < 0 ? 'down' : 'same');
+    $formattedDifference = $unit === 'percentage'
+      ? number_format($previous !== 0.0 ? abs($difference / $previous) * 100 : ($current !== 0.0 ? 100 : 0), 1) . '%'
+      : number_format(abs($difference));
 
-    if ($previous === 0.0) {
-      return [
-        'direction' => $current === 0.0 ? 'same' : 'new',
-        'label' => $current === 0.0 ? '0% vs last month' : 'New vs last month',
-      ];
-    }
-
-    $change = (($current - $previous) / abs($previous)) * 100;
-    $direction = $change > 0 ? 'up' : ($change < 0 ? 'down' : 'same');
-    $prefix = $change > 0 ? '+' : '';
+    $label = match ($direction) {
+      'up' => ' ' . $formattedDifference,
+      'down' => ' ' . $formattedDifference,
+      default => 'Tidak berubah vs bulan lalu',
+    };
 
     return [
       'direction' => $direction,
-      'label' => $prefix . number_format($change, 1) . '% vs last month',
+      'label' => $label,
     ];
   }
 
@@ -384,6 +383,19 @@ class TraceDashboard extends Dashboard
   private function money(float|int|string $amount): string
   {
     return 'Rp ' . number_format((float) $amount, 0, ',', '.');
+  }
+
+  private function compactMoney(float|int|string $amount): string
+  {
+    $amount = (float) $amount;
+
+    return match (true) {
+      abs($amount) >= 1_000_000_000_000 => 'Rp ' . number_format($amount / 1_000_000_000_000, 2, ',', '.') . 'T',
+      abs($amount) >= 1_000_000_000 => 'Rp ' . number_format($amount / 1_000_000_000, 2, ',', '.') . 'M',
+      abs($amount) >= 1_000_000 => 'Rp ' . number_format($amount / 1_000_000, 2, ',', '.') . 'JT',
+      abs($amount) >= 1_000 => 'Rp ' . number_format($amount / 1_000, 2, ',', '.') . 'RB',
+      default => $this->money($amount),
+    };
   }
 
   private function resetPageState(): void

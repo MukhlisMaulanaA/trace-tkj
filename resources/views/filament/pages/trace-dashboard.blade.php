@@ -48,18 +48,16 @@
         <a href="{{ $kpi['url'] }}" class="trace-kpi trace-kpi--{{ $kpi['tone'] }}">
           <div class="trace-kpi__top"><span>{{ $kpi['label'] }}</span><x-filament::icon
               icon="heroicon-m-arrow-up-right" /></div>
-          <strong>{{ $kpi['value'] }}</strong>
+          <strong class="trace-kpi__value">{{ $kpi['value'] }}</strong>
           <small class="trace-kpi__comparison trace-kpi__comparison--{{ $kpi['comparison']['direction'] }}">
-            <span class="trace-kpi__delta">{{ $kpi['comparison']['direction'] === 'down' ? '↘' : '↗' }}</span>
-            {{ $kpi['comparison']['label'] }}
+            <span class="trace-kpi__delta" aria-hidden="true">{{ match ($kpi['comparison']['direction']) { 'up' => '▲', 'down' => '▼', default => '—' } }} {{ $kpi['comparison']['label'] }}</span>
+            <span>vs last month</span>
           </small>
+          <svg class="trace-kpi__sparkline" viewBox="0 0 160 24" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="0,19 32,15 64,16 96,10 128,11 160,5" />
+          </svg>
         </a>
       @endforeach
-      <div class="trace-kpi trace-kpi--violet">
-        <div class="trace-kpi__top"><span>Utilization</span><x-filament::icon icon="heroicon-m-chart-bar" /></div>
-        <strong>{{ $data['utilization'] }}<small>%</small></strong>
-        <small>budget terpakai</small>
-      </div>
     </section>
 
     <div class="trace-dashboard__main-grid">
@@ -179,7 +177,8 @@
               class="trace-highlight__mark">●</span>
             <div>
               <small>{{ $item['label'] }}</small><strong>{{ $item['title'] }}</strong>
-              <p>{{ $item['value'] }} · {{ $item['detail'] }}</p>
+              <span class="trace-highlight__location">{{ $item['location'] }}</span>
+              <p class="trace-highlight__value--{{ $item['tone'] }}">{{ $item['value'] }}</p>
             </div>
           </a>
         @empty
