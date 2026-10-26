@@ -26,4 +26,7 @@ Route::middleware(['auth'])->group(function () {
 
   Route::get('/admin/invoices/{invoice}/receipt', [InvoiceDocumentController::class, 'receipt'])
     ->name('invoices.receipt');
+
+  Route::get('/admin/invoices/{invoice}/excel', [InvoiceDocumentController::class, 'excel'])
+    ->name('invoices.excel');
 });

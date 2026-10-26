@@ -4,11 +4,11 @@ namespace App\Exports;
 
 use App\Models\ProjectExpenditure;
 use App\Models\ProjectSummary;
+use App\Services\Documents\CompanyExcelHeader;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ProjectSummaryExport
@@ -59,49 +59,28 @@ class ProjectSummaryExport
     $sheet->getPageSetup()->setOrientation('landscape')->setPaperSize('9');
     $sheet->getPageMargins()->setTop(0.3)->setRight(0.3)->setBottom(0.3)->setLeft(0.3);
     $sheet->getPageSetup()->setFitToWidth(1)->setFitToHeight(0);
+    $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 7);
+    $sheet->getPageSetup()->setPrintArea('A1:I' . $sheet->getHighestRow());
+    $sheet->freezePane('A8');
 
     return $spreadsheet;
   }
 
   private function setColumnWidths($sheet): void
   {
-    foreach (['A' => 7, 'B' => 33, 'C' => 20, 'D' => 24, 'E' => 3, 'F' => 7, 'G' => 27, 'H' => 20, 'I' => 20] as $column => $width) {
+    foreach (['A' => 11, 'B' => 33, 'C' => 20, 'D' => 24, 'E' => 3, 'F' => 7, 'G' => 27, 'H' => 20, 'I' => 20] as $column => $width) {
       $sheet->getColumnDimension($column)->setWidth($width);
     }
   }
 
   private function writeHeader($sheet): void
   {
-    $companyName = 'PT. TANJUNG KARYA JAYA';
-    $companyAddress = 'Perumahan Bumi Anugrah Sejahtera Blok B4 - No.3, Rt.009 / Rw.013, Kelurahan Kebalen, Kec. Babelan - Bekasi, Jawa Barat';
-    $companyPhone = '0811-1020-770 - 0856-1539-431';
-    $companyEmail = 'officetkj@tanjungkaryajaya.co.id / admin@tanjungkaryajaya.co.id';
-
-    foreach (['C1:F1', 'A2:F2', 'A3:F3', 'A4:F4', 'A5:F5', 'H1:I2', 'H3:I3', 'A7:I7'] as $range) {
-      $sheet->mergeCells($range);
-    }
-    $sheet->setCellValue('C1', $companyName);
-    $sheet->setCellValue('A2', $companyAddress);
-    $sheet->setCellValue('A3', 'Telp : ' . $companyPhone);
-    $sheet->setCellValue('A4', 'Email : ' . $companyEmail);
-    $sheet->setCellValue('A5', 'Website : tanjungkaryajaya.co.id');
-    $sheet->setCellValue('H1', 'REKAPITULASI PROJECT');
-    $sheet->setCellValue('H3', 'PT. TANJUNG KARYA JAYA');
-    $sheet->setCellValue('A7', 'REKAP PENGELUARAN PROJECT ' . $this->projectTitle());
-    $sheet->getStyle('C1')->getFont()->setBold(true)->setSize(14);
-    $sheet->getStyle('A2:A5')->getFont()->setSize(8)->getColor()->setARGB('FF374151');
-    $sheet->getStyle('H1')->getFont()->setBold(true)->setSize(16);
-    $sheet->getStyle('H1:H3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-    $sheet->getStyle('H3')->getFont()->setSize(8)->getColor()->setARGB('FF6B7280');
-    $sheet->getStyle('A7')->getFont()->setBold(true)->setSize(15);
-    $sheet->getStyle('A7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-    $sheet->getStyle('A6:I6')->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
-
-    $logoPath = public_path('images/logo-tkj.png');
-    if (is_file($logoPath)) {
-      $drawing = new Drawing();
-      $drawing->setName('Company logo')->setPath($logoPath)->setHeight(48)->setCoordinates('A1')->setOffsetX(2)->setOffsetY(2)->setWorksheet($sheet);
-    }
+    (new CompanyExcelHeader())->render(
+      $sheet,
+      'REKAPITULASI PROJECT',
+      config('company.name'),
+      'REKAP PENGELUARAN PROJECT ' . $this->projectTitle(),
+    );
   }
 
   private function writeMetrics($sheet): void

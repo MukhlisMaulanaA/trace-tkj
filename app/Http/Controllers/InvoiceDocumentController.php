@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\InvoiceExport;
 use App\Models\Invoice;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class InvoiceDocumentController extends Controller
 {
@@ -28,6 +30,20 @@ class InvoiceDocumentController extends Controller
       'invoice' => $invoice,
       'amountWords' => $this->terbilang((int) round((float) $invoice->grand_total)) . ' Rupiah',
     ]);
+  }
+
+  public function excel(Invoice $invoice): BinaryFileResponse
+  {
+    $this->authorizeInvoice($invoice);
+
+    $export = new InvoiceExport($invoice);
+    $temporaryFile = $export->download();
+
+    return response()->download(
+      $temporaryFile,
+      $export->filename(),
+      ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+    )->deleteFileAfterSend(true);
   }
 
   private function authorizeInvoice(Invoice $invoice): void

@@ -27,6 +27,11 @@ class ViewInvoice extends ViewRecord
         ->color('warning')
         ->url(fn(Invoice $record): string => route('invoices.receipt', $record))
         ->openUrlInNewTab(),
+      Action::make('invoiceExcel')
+        ->label('Export Excel')
+        ->icon('heroicon-o-arrow-down-tray')
+        ->color('info')
+        ->url(fn(Invoice $record): string => route('invoices.excel', $record)),
       EditAction::make(),
     ];
   }

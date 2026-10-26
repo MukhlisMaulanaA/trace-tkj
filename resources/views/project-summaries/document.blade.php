@@ -12,14 +12,6 @@
       ->orderBy('expenditure_date')
       ->get();
 
-  $companyName = 'PT. TANJUNG KARYA JAYA';
-  $companyAddress =
-      'Perumahan Bumi Anugrah Sejahtera Blok B4 - No.3, ' .
-      'Rt.009 / Rw.013, Kelurahan Kebalen, ' .
-      'Kec. Babelan - Bekasi, Jawa Barat';
-  $companyPhone = '0811-1020-770 - 0856-1539-431';
-  $companyEmail = 'officetkj@tanjungkaryajaya.co.id / admin@tanjungkaryajaya.co.id';
-
   $money = static fn($value): string => 'Rp' . number_format((float) ($value ?? 0), 0, ',', '.');
   $date = static fn($value): string => $value?->format('d/m/Y') ?? '-';
   $projectTitle = $project?->nama_project ?: $record->project_name ?: 'PROJECT';
@@ -432,22 +424,7 @@
   </div>
 
   <main class="document">
-    <header class="company-header">
-      <div class="company-brand">
-        <img src="{{ asset('images/logo-tkj.png') }}" alt="Logo {{ $companyName }}" class="company-logo">
-        <div>
-          <h1 class="company-name">{{ $companyName }}</h1>
-          <p class="company-address">{{ $companyAddress }}</p>
-          <p class="company-contact">Telp : {{ $companyPhone }}</p>
-          <p class="company-contact">Email : {{ $companyEmail }}</p>
-          <p class="company-contact">Website : tanjungkaryajaya.co.id</p>
-        </div>
-      </div>
-      <div>
-        <h2 class="document-title">REKAPITULASI PROJECT</h2>
-        <p class="document-subtitle">PT. TANJUNG KARYA JAYA</p>
-      </div>
-    </header>
+    <x-documents.company-header title="REKAPITULASI PROJECT" subtitle="PT. TANJUNG KARYA JAYA" />
 
     <hr class="header-rule">
     <h2 class="title">REKAP PENGELUARAN PROJECT {{ $projectTitle }}</h2>
@@ -582,9 +559,9 @@
     </section>
 
     <footer class="footer">
-      <strong>{{ $companyName }}</strong><br>
-      {{ $companyAddress }}<br>
-      Telp : {{ $companyPhone }} &nbsp; | &nbsp; Email : {{ $companyEmail }}
+      <strong>{{ config('company.name') }}</strong><br>
+      {{ config('company.address') }}<br>
+      Telp : {{ config('company.phones') }} &nbsp; | &nbsp; Email : {{ config('company.emails') }}
     </footer>
   </main>
 </body>

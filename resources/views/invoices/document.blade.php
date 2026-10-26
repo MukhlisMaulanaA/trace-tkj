@@ -1,9 +1,4 @@
 @php
-  $companyName = 'PT. TANJUNG KARYA JAYA';
-  $companyAddress =
-      'Perumahan Bumi Anugrah Sejahtera Blok B4 - No.3, Rt.009 / Rw.013, Kelurahan Kebalen, Kec. Babelan - Bekasi, Jawa Barat';
-  $companyPhone = '0811-1020-770 - 0856-1539-431';
-  $companyEmail = 'officetkj@tanjungkaryajaya.co.id / admin@tanjungkaryajaya.co.id';
   $money = fn($value) => number_format((float) $value, 0, ',', '.');
   $date = fn($value) => $value ? \Carbon\Carbon::parse($value)->locale('id')->translatedFormat('d F Y') : '-';
   $subtotalAfterDiscount = max(0, (float) $invoice->subtotal - (float) $invoice->discount_amount);
@@ -276,7 +271,7 @@
     }
 
     .signature-space {
-      height: 48px;
+      height: 72px;
     }
 
     .print-toolbar {
@@ -378,22 +373,7 @@
     <button type="button" class="print-button" onclick="window.print()">Save as PDF</button>
   </div>
   <main class="document">
-    <header class="company-header">
-      <div class="company-brand">
-        <img src="{{ asset('images/logo-tkj.png') }}" alt="Logo {{ $companyName }}" class="company-logo">
-        <div class="company-info">
-          <h1 class="company-name"><span class="company-name-tanjung">PT. TANJUNG</span> <span class="company-name-karya">KARYA</span> <span class="company-name-jaya">JAYA</span></h1>
-          <p class="company-address">{{ $companyAddress }}</p>
-          <p class="company-contact">Telp : {{ $companyPhone }}</p>
-          <p class="company-contact">Email : {{ $companyEmail }}</p>
-          <p class="company-contact">Website : tanjungkaryajaya.co.id</p>
-        </div>
-      </div>
-      <div>
-        <h2 class="document-title">INVOICE</h2>
-        <p class="document-subtitle">PT. TANJUNG KARYA JAYA</p>
-      </div>
-    </header>
+    <x-documents.company-header title="INVOICE" subtitle="PT. TANJUNG KARYA JAYA" />
     <hr class="header-rule">
     <table class="meta" contenteditable="true">
       <tr>

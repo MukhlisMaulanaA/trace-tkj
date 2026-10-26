@@ -70,5 +70,9 @@ class InvoiceTest extends TestCase
     $this->actingAs($user)
       ->get(route('invoices.receipt', $invoice))
       ->assertOk();
+    $this->actingAs($user)
+      ->get(route('invoices.excel', $invoice))
+      ->assertOk()
+      ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   }
 }
