@@ -343,7 +343,7 @@ class TraceDashboard extends Dashboard
     $label = match ($direction) {
       'up' => ' ' . $formattedDifference,
       'down' => ' ' . $formattedDifference,
-      default => 'Tidak berubah vs bulan lalu',
+      default => 'Tidak berubah',
     };
 
     return [
