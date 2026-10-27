@@ -3,80 +3,125 @@
 namespace App\Http\Controllers;
 
 use App\Exports\InvoiceExport;
+use App\Exports\InvoiceYearlySummaryExport;
 use App\Models\Invoice;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class InvoiceDocumentController extends Controller
 {
-  public function invoice(Invoice $invoice): View
-  {
-    $this->authorizeInvoice($invoice);
-    $invoice->load(['purchaseOrder.project', 'items']);
+    public function invoice(Invoice $invoice): View
+    {
+        $this->authorizeInvoice($invoice);
+        $invoice->load(['purchaseOrder.project', 'items']);
 
-    return view('invoices.document', [
-      'invoice' => $invoice,
-      'bank' => $this->bankDetails($invoice->payment_method),
-    ]);
-  }
-
-  public function receipt(Invoice $invoice): View
-  {
-    $this->authorizeInvoice($invoice);
-    $invoice->load('purchaseOrder');
-
-    return view('invoices.receipt', [
-      'invoice' => $invoice,
-      'amountWords' => $this->terbilang((int) round((float) $invoice->grand_total)) . ' Rupiah',
-    ]);
-  }
-
-  public function excel(Invoice $invoice): BinaryFileResponse
-  {
-    $this->authorizeInvoice($invoice);
-
-    $export = new InvoiceExport($invoice);
-    $temporaryFile = $export->download();
-
-    return response()->download(
-      $temporaryFile,
-      $export->filename(),
-      ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-    )->deleteFileAfterSend(true);
-  }
-
-  private function authorizeInvoice(Invoice $invoice): void
-  {
-    $invoice->loadMissing('purchaseOrder');
-
-    if ($invoice->purchaseOrder) {
-      Gate::authorize('view', $invoice->purchaseOrder);
+        return view('invoices.document', [
+            'invoice' => $invoice,
+            'bank' => $this->bankDetails($invoice->payment_method),
+        ]);
     }
-  }
 
-  private function bankDetails(string $method): array
-  {
-    return match ($method) {
-      'bca_ilham' => ['bank' => 'Bank BCA (ILHAM JAWAZ)', 'account' => '521-139-9741', 'name' => 'ILHAM JAWAZ'],
-      'bca_rohiman' => ['bank' => 'Bank BCA (ROHIMAN)', 'account' => '741-053-9483', 'name' => 'ROHIMAN'],
-      default => ['bank' => 'Bank Mandiri', 'account' => '156-00-2075315-0', 'name' => 'PT. TANJUNG KARYA JAYA'],
-    };
-  }
+    public function receipt(Invoice $invoice): View
+    {
+        $this->authorizeInvoice($invoice);
+        $invoice->load('purchaseOrder');
 
-  private function terbilang(int $number): string
-  {
-    $words = ['Nol', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+        return view('invoices.receipt', [
+            'invoice' => $invoice,
+            'amountWords' => $this->terbilang((int) round((float) $invoice->grand_total)).' Rupiah',
+        ]);
+    }
 
-    if ($number < 12) return $words[$number];
-    if ($number < 20) return $this->terbilang($number - 10) . ' Belas';
-    if ($number < 100) return $this->terbilang(intdiv($number, 10)) . ' Puluh' . ($number % 10 ? ' ' . $this->terbilang($number % 10) : '');
-    if ($number < 200) return 'Seratus' . ($number - 100 ? ' ' . $this->terbilang($number - 100) : '');
-    if ($number < 1000) return $this->terbilang(intdiv($number, 100)) . ' Ratus' . ($number % 100 ? ' ' . $this->terbilang($number % 100) : '');
-    if ($number < 2000) return 'Seribu' . ($number - 1000 ? ' ' . $this->terbilang($number - 1000) : '');
-    if ($number < 1000000) return $this->terbilang(intdiv($number, 1000)) . ' Ribu' . ($number % 1000 ? ' ' . $this->terbilang($number % 1000) : '');
-    if ($number < 1000000000) return $this->terbilang(intdiv($number, 1000000)) . ' Juta' . ($number % 1000000 ? ' ' . $this->terbilang($number % 1000000) : '');
+    public function excel(Invoice $invoice): BinaryFileResponse
+    {
+        $this->authorizeInvoice($invoice);
 
-    return $this->terbilang(intdiv($number, 1000000000)) . ' Miliar' . ($number % 1000000000 ? ' ' . $this->terbilang($number % 1000000000) : '');
-  }
+        $export = new InvoiceExport($invoice);
+        $temporaryFile = $export->download();
+
+        return response()->download(
+            $temporaryFile,
+            $export->filename(),
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        )->deleteFileAfterSend(true);
+    }
+
+    public function yearlySummary(?int $year = null): BinaryFileResponse
+    {
+        $year ??= now()->year;
+        $availableYears = Invoice::accessibleBy(Auth::user())
+            ->whereNotNull('created_at')
+            ->pluck('created_at')
+            ->map(fn ($date): int => Carbon::parse($date)->year)
+            ->unique();
+
+        abort_unless($year === now()->year || $availableYears->contains($year), 404);
+
+        $invoices = Invoice::accessibleBy(Auth::user())
+            ->with('purchaseOrder')
+            ->whereBetween('created_at', [Carbon::create($year, 1, 1)->startOfDay(), Carbon::create($year, 12, 31)->endOfDay()])
+            ->orderBy('created_at')
+            ->get();
+        $export = new InvoiceYearlySummaryExport($invoices, $year);
+        $temporaryFile = $export->download();
+
+        return response()->download(
+            $temporaryFile,
+            $export->filename(),
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        )->deleteFileAfterSend(true);
+    }
+
+    private function authorizeInvoice(Invoice $invoice): void
+    {
+        $invoice->loadMissing('purchaseOrder');
+
+        if ($invoice->purchaseOrder) {
+            Gate::authorize('view', $invoice->purchaseOrder);
+        }
+    }
+
+    private function bankDetails(string $method): array
+    {
+        return match ($method) {
+            'bca_ilham' => ['bank' => 'Bank BCA (ILHAM JAWAZ)', 'account' => '521-139-9741', 'name' => 'ILHAM JAWAZ'],
+            'bca_rohiman' => ['bank' => 'Bank BCA (ROHIMAN)', 'account' => '741-053-9483', 'name' => 'ROHIMAN'],
+            default => ['bank' => 'Bank Mandiri', 'account' => '156-00-2075315-0', 'name' => 'PT. TANJUNG KARYA JAYA'],
+        };
+    }
+
+    private function terbilang(int $number): string
+    {
+        $words = ['Nol', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+
+        if ($number < 12) {
+            return $words[$number];
+        }
+        if ($number < 20) {
+            return $this->terbilang($number - 10).' Belas';
+        }
+        if ($number < 100) {
+            return $this->terbilang(intdiv($number, 10)).' Puluh'.($number % 10 ? ' '.$this->terbilang($number % 10) : '');
+        }
+        if ($number < 200) {
+            return 'Seratus'.($number - 100 ? ' '.$this->terbilang($number - 100) : '');
+        }
+        if ($number < 1000) {
+            return $this->terbilang(intdiv($number, 100)).' Ratus'.($number % 100 ? ' '.$this->terbilang($number % 100) : '');
+        }
+        if ($number < 2000) {
+            return 'Seribu'.($number - 1000 ? ' '.$this->terbilang($number - 1000) : '');
+        }
+        if ($number < 1000000) {
+            return $this->terbilang(intdiv($number, 1000)).' Ribu'.($number % 1000 ? ' '.$this->terbilang($number % 1000) : '');
+        }
+        if ($number < 1000000000) {
+            return $this->terbilang(intdiv($number, 1000000)).' Juta'.($number % 1000000 ? ' '.$this->terbilang($number % 1000000) : '');
+        }
+
+        return $this->terbilang(intdiv($number, 1000000000)).' Miliar'.($number % 1000000000 ? ' '.$this->terbilang($number % 1000000000) : '');
+    }
 }
