@@ -54,6 +54,13 @@ class PurchaseOrdersTable
           ->toggleable(isToggledHiddenByDefault: true),
       ])
       ->filters([
+        SelectFilter::make('type')
+          ->label('Tipe PO')
+          ->options([
+            'project' => 'Project',
+            'vendor' => 'Vendor',
+          ])
+          ->placeholder('Semua Tipe'),
         SelectFilter::make('project_source')
           ->label('Sumber Project')
           ->options([
