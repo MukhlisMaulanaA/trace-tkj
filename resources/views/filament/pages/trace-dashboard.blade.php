@@ -64,7 +64,7 @@
       <section class="trace-panel trace-panel--chart">
         <div class="trace-panel__heading">
           <div>
-            <h2>Profit & Expenditure History</h2>
+            <h2>Profit & Pengeluaran History</h2>
             <p>Kumulatif historis data untuk melihat perubahan dari waktu ke waktu</p>
           </div>
           <div class="trace-segmented" data-chart-ranges>
@@ -76,7 +76,7 @@
         </div>
         <div class="trace-legend">
           <span class="trace-legend__profit">Profit</span>
-          <span class="trace-legend__expense">Expenditure</span>
+          <span class="trace-legend__expense">Pengeluaran</span>
           <span class="trace-legend__invoice">Nilai PO</span>
         </div>
         <div class="trace-chart" data-trace-chart>
@@ -104,7 +104,7 @@
                     <span>{{ $axisLabel }}</span>
                   @endforeach
                 </div>
-                <svg viewBox="0 0 1020 230" role="img" aria-label="Grafik profit, expenditure dan nilai PO"
+                <svg viewBox="0 0 1020 230" role="img" aria-label="Grafik profit, pengeluaran dan nilai PO"
                   preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="traceChartFill-{{ $range }}" x1="0" x2="0"
@@ -153,10 +153,9 @@
                   @endforeach
                 </svg>
               </div>
-              <div class="trace-chart__labels"
-                style="grid-template-columns: repeat({{ max(1, $rangePoints->count()) }}, minmax(0, 1fr));">
-                @foreach ($rangePoints as $point)
-                  <span>{{ $point['label'] }}</span>
+              <div class="trace-chart__labels">
+                @foreach ($rangePoints as $index => $point)
+                  <span style="left: {{ $pointX($index) / 1020 * 100 }}%;">{{ $point['label'] }}</span>
                 @endforeach
               </div>
             </div>

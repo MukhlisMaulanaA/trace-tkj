@@ -79,4 +79,57 @@ class TraceDashboardTest extends TestCase
     $this->assertFalse($attention->contains('title', 'PO-RECENT'));
     $this->assertFalse($attention->contains('title', 'PO-COMPLETE'));
   }
+
+  public function test_dashboard_metrics_use_the_selected_period(): void
+  {
+    Carbon::setTestNow('2026-09-28 12:00:00');
+    $this->actingAs(User::factory()->create(['project_scope' => 'pusat']));
+
+    $oldProject = Project::create([
+      'nama_project' => 'Project Bulan Lalu',
+      'kustomer' => 'Customer A',
+      'lokasi' => 'Jakarta',
+      'nomor_quotation' => 'Q-OLD',
+    ]);
+    $oldProject->forceFill(['created_at' => '2026-08-15', 'updated_at' => '2026-08-15'])->saveQuietly();
+    $oldOrder = PurchaseOrder::create([
+      'po_number' => 'PO-OLD',
+      'po_date' => '2026-08-15',
+      'project_id' => $oldProject->id,
+    ]);
+    $oldOrder->forceFill(['grand_total' => 100000])->saveQuietly();
+
+    $currentProject = Project::create([
+      'nama_project' => 'Project Bulan Ini',
+      'kustomer' => 'Customer B',
+      'lokasi' => 'Bandung',
+      'nomor_quotation' => 'Q-CURRENT',
+    ]);
+    $currentOrder = PurchaseOrder::create([
+      'po_number' => 'PO-CURRENT',
+      'po_date' => '2026-09-15',
+      'project_id' => $currentProject->id,
+    ]);
+    $currentOrder->forceFill(['grand_total' => 200000])->saveQuietly();
+
+    $dashboard = new TraceDashboard;
+    $dashboard->period = 'month';
+    $data = $dashboard->dashboardData();
+
+    $this->assertSame('1', $data['kpis'][0]['value']);
+    $this->assertSame('1', $data['kpis'][1]['value']);
+    $this->assertSame('Rp 200.000', $data['financial']['Total Nilai PO']);
+    $this->assertSame('Project Bulan Ini', $data['recentProjects']->first()['title']);
+    $this->assertSame('PO-CURRENT', $data['recentOrders']->first()['title']);
+    $chartLabels = $data['chartRanges']['all']['points']->pluck('label')->all();
+    $this->assertContains('Aug', $chartLabels);
+    $this->assertContains('Sep', $chartLabels);
+
+    $dashboard->period = 'all';
+    $allTimeData = $dashboard->dashboardData();
+
+    $this->assertSame('2', $allTimeData['kpis'][0]['value']);
+    $this->assertSame('2', $allTimeData['kpis'][1]['value']);
+    $this->assertSame('Rp 300.000', $allTimeData['financial']['Total Nilai PO']);
+  }
 }

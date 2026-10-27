@@ -16,7 +16,7 @@
   --trace-red: #ed5c6b;
   --trace-violet: #7c70e8;
   color: var(--trace-text);
-  font-family: 'Instrument Sans', ui-sans-serif, sans-serif;
+  font-family: 'Inter Variable', ui-sans-serif, sans-serif;
 }
 
 html.dark .trace-dashboard {
@@ -476,11 +476,16 @@ html.dark .trace-dashboard {
 }
 
 .trace-chart__labels {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
+  position: relative;
+  height: 14px;
   color: var(--trace-muted);
   font-size: 8px;
-  text-align: center;
+}
+
+.trace-chart__labels span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 
 .trace-highlights__footer {

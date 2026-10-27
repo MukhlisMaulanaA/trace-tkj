@@ -77,16 +77,26 @@ class TraceDashboard extends Dashboard
       $summaryQuery->whereHas('project', fn($query) => $query->where('project_source', $source));
     }
 
-    $projects = $projectQuery->get();
-    $purchaseOrders = $poQuery->get();
-    $summaries = $summaryQuery->get();
     $period = $this->periodBounds();
+    $allProjects = $projectQuery->get();
+    $allPurchaseOrders = $poQuery->get();
+    $allSummaries = $summaryQuery->get();
+    $projects = $allProjects
+      ->filter(fn($project) => $this->inPeriod($project->created_at, $period))
+      ->values();
+    $purchaseOrders = $allPurchaseOrders
+      ->filter(fn($order) => $this->inPeriod($order->po_date, $period))
+      ->values();
+    $summaries = $allSummaries
+      ->filter(fn($summary) => $this->inPeriod($summary->project?->created_at, $period))
+      ->values();
     $recentProjects = $projects->sortByDesc('created_at')->take(5);
     $recentOrders = $purchaseOrders->sortByDesc('po_date')->take(5);
     $progresses = $projects->flatMap(fn(Project $project) => $project->progresses)
       ->filter(fn(ProjectProgress $progress) => $this->inPeriod($progress->waktu_progres, $period))
       ->sortByDesc('waktu_progres');
     $allInvoiceProgresses = $purchaseOrders->flatMap(fn(PurchaseOrder $order) => $order->progresses);
+    $chartInvoiceProgresses = $allPurchaseOrders->flatMap(fn(PurchaseOrder $order) => $order->progresses);
     $invoiceProgresses = $purchaseOrders->flatMap(fn(PurchaseOrder $order) => $order->progresses)
       ->filter(fn(PurchaseOrderProgress $progress) => $this->inPeriod($progress->invoice_date, $period))
       ->sortByDesc('invoice_date');
@@ -98,24 +108,25 @@ class TraceDashboard extends Dashboard
       : 0;
     $expenditures = $summaries->flatMap(fn(ProjectSummary $summary) => $summary->expenditures)
       ->filter(fn(ProjectExpenditure $expenditure) => $this->inPeriod($expenditure->expenditure_date, $period));
-    $allExpenditures = $summaries->flatMap(fn(ProjectSummary $summary) => $summary->expenditures);
-    $activityDates = collect([
-      ...$purchaseOrders->pluck('po_date')->all(),
-      ...$allInvoiceProgresses->pluck('invoice_date')->all(),
+    $allExpenditures = $allSummaries->flatMap(fn(ProjectSummary $summary) => $summary->expenditures);
+    $chartActivityDates = collect([
+      ...$allPurchaseOrders->pluck('po_date')->all(),
+      ...$chartInvoiceProgresses->pluck('invoice_date')->all(),
       ...$allExpenditures->pluck('expenditure_date')->all(),
-      ...$projects->pluck('created_at')->all(),
+      ...$allProjects->pluck('created_at')->all(),
     ])->filter()->map(fn($date) => Carbon::parse($date)->startOfMonth());
-    $chartStart = $activityDates->isNotEmpty() ? $activityDates->min() : now()->startOfMonth();
-    $chartMonthCount = max(12, (int) $chartStart->diffInMonths(now()->startOfMonth()) + 1);
-    $chart = collect(range($chartMonthCount - 1, 0))->map(function (int $monthsAgo) use ($allInvoiceProgresses, $allExpenditures, $summaries, $purchaseOrders): array {
-      $month = now()->startOfMonth()->subMonths($monthsAgo);
+    $chartEnd = now()->startOfMonth();
+    $chartStart = $chartActivityDates->isNotEmpty() ? $chartActivityDates->min() : $chartEnd;
+    $chartMonthCount = max(12, (int) $chartStart->diffInMonths($chartEnd) + 1);
+    $chart = collect(range($chartMonthCount - 1, 0))->map(function (int $monthsAgo) use ($chartEnd, $allInvoiceProgresses, $allExpenditures, $allSummaries, $allPurchaseOrders): array {
+      $month = $chartEnd->copy()->subMonths($monthsAgo);
       $monthKey = $month->format('Y-m');
 
       return [
         'label' => $month->format('M'),
-        'po' => (float) $purchaseOrders->filter(fn(PurchaseOrder $order) => $order->po_date && Carbon::parse($order->po_date)->format('Y-m') === $monthKey)->sum('grand_total'),
-        'profit' => (float) $summaries->filter(fn(ProjectSummary $summary) => $summary->project?->created_at && Carbon::parse($summary->project->created_at)->format('Y-m') === $monthKey)->sum(fn(ProjectSummary $summary) => $summary->final_profit),
-        'expenditure' => (float) $allExpenditures->filter(fn(ProjectExpenditure $expenditure) => Carbon::parse($expenditure->expenditure_date)->format('Y-m') === $monthKey)->sum('amount'),
+        'po' => (float) $allPurchaseOrders->filter(fn($order) => $order->po_date && Carbon::parse($order->po_date)->format('Y-m') === $monthKey)->sum('grand_total'),
+        'profit' => (float) $allSummaries->filter(fn($summary) => $summary->project?->created_at && Carbon::parse($summary->project->created_at)->format('Y-m') === $monthKey)->sum(fn($summary) => $summary->final_profit),
+        'expenditure' => (float) $allExpenditures->filter(fn($expenditure) => Carbon::parse($expenditure->expenditure_date)->format('Y-m') === $monthKey)->sum('amount'),
       ];
     });
     $chartMax = max(1, (float) $chart->max(fn(array $point): float => max($point['po'], $point['profit'], $point['expenditure'])));
@@ -129,16 +140,16 @@ class TraceDashboard extends Dashboard
       $project->id => $project->progresses->sortByDesc('waktu_progres')->first(),
     ]);
 
-    $attention = $this->staleProjectAttention($projects)
-      ->concat($this->stalePurchaseOrderAttention($purchaseOrders))
+    $attention = $this->staleProjectAttention($allProjects)
+      ->concat($this->stalePurchaseOrderAttention($allPurchaseOrders))
       ->sortBy('date')
       ->values()
       ->take(8);
     $highlights = $this->projectHighlights($summaries);
     $lastMonth = [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()];
-    $previousProjects = $projects->filter(fn(Project $project) => $project->created_at && Carbon::parse($project->created_at)->lte($lastMonth[1]));
-    $previousOrders = $purchaseOrders->filter(fn(PurchaseOrder $order) => $order->po_date && Carbon::parse($order->po_date)->lte($lastMonth[1]));
-    $previousSummaries = $summaries->filter(fn(ProjectSummary $summary) => $summary->project?->created_at && Carbon::parse($summary->project->created_at)->lte($lastMonth[1]));
+    $previousProjects = $projects->filter(fn($project) => $project->created_at && Carbon::parse($project->created_at)->lte($lastMonth[1]));
+    $previousOrders = $purchaseOrders->filter(fn($order) => $order->po_date && Carbon::parse($order->po_date)->lte($lastMonth[1]));
+    $previousSummaries = $summaries->filter(fn($summary) => $summary->project?->created_at && Carbon::parse($summary->project->created_at)->lte($lastMonth[1]));
     $materialTotal = (float) $expenditures->where('type', ProjectExpenditure::TYPE_MATERIAL)->sum('amount');
     $labourTotal = (float) $expenditures->where('type', ProjectExpenditure::TYPE_LABOUR)->sum('amount');
     $expenditureTotal = $materialTotal + $labourTotal;
@@ -206,7 +217,7 @@ class TraceDashboard extends Dashboard
 
   public function periodOptions(): array
   {
-    return ['month' => 'Bulan ini', 'last_month' => 'Bulan lalu', 'quarter' => 'Quarter ini', 'year' => 'Tahun ini'];
+    return ['month' => 'Bulan ini', 'last_month' => 'Bulan lalu', 'quarter' => 'Quarter ini', 'year' => 'Tahun ini', 'all' => 'All Time'];
   }
 
   private function periodBounds(): array
@@ -222,6 +233,10 @@ class TraceDashboard extends Dashboard
 
   private function inPeriod(null|Carbon|string $date, array $period): bool
   {
+    if ($this->period === 'all') {
+      return $date !== null;
+    }
+
     return $date !== null && Carbon::parse($date)->betweenIncluded($period[0], $period[1]);
   }
 
