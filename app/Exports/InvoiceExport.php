@@ -231,7 +231,7 @@ class InvoiceExport
             $sheet->setCellValue("C{$footerRow}", ': ' . $value);
         }
 
-        $signatureRow = $row + 5;
+        $signatureRow = $row + 7;
         $sheet->mergeCells("F{$signatureRow}:I{$signatureRow}");
         $sheet->setCellValue("F{$signatureRow}", '( ILHAM JAWAZ )');
         $sheet->getStyle("F{$signatureRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
