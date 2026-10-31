@@ -278,12 +278,11 @@ class TraceDashboard extends Dashboard
 
     return $projects
       ->filter(function (Project $project) use ($staleSince): bool {
-        $latestProgress = $project->progresses->sortByDesc('waktu_progres')->first();
-
-        if ($latestProgress && (float) $latestProgress->persentase >= 100) {
+        if ($project->progresses()->where('persentase', '>=', 100)->exists()) {
           return false;
         }
 
+        $latestProgress = $project->progresses->sortByDesc('waktu_progres')->first();
         $lastActivity = $latestProgress?->waktu_progres ?? $project->created_at;
 
         return $lastActivity !== null && Carbon::parse($lastActivity)->lte($staleSince);

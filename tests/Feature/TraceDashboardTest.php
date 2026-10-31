@@ -100,6 +100,12 @@ class TraceDashboardTest extends TestCase
       'persentase' => 100,
       'keterangan' => 'Project selesai',
     ]);
+    ProjectProgress::create([
+      'project_id' => $project->id,
+      'waktu_progres' => '2026-08-15',
+      'persentase' => 50,
+      'keterangan' => 'Progress historis',
+    ]);
 
     $purchaseOrder = PurchaseOrder::create([
       'po_number' => 'PO-FULFILLED',
