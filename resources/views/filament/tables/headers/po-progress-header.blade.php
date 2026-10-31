@@ -14,8 +14,8 @@
 
   $currentProgress = $grandTotal > 0 ? max(0, min(1000, round(($totalPaid / $grandTotal) * 100, 2))) : 0;
 
-  $status = match (true) {
-      $currentProgress >= 100 => 'Selesai dibayar',
+    $status = match (true) {
+      $purchaseOrder->isFulfilled() => 'Selesai dibayar',
       $currentProgress >= 75 => 'Hampir selesai',
       $currentProgress >= 50 => 'Pembayaran berjalan',
       $currentProgress >= 25 => 'Sedang dibayar',

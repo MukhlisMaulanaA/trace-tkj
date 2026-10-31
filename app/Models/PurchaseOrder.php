@@ -193,6 +193,16 @@ class PurchaseOrder extends Model
     return $this->status === 'submitted';
   }
 
+  public function isFulfilled(): bool
+  {
+    $grandTotal = (float) $this->grand_total;
+    $paidAmount = $this->relationLoaded('progresses')
+      ? $this->progresses->sum('amount')
+      : $this->progresses()->sum('amount');
+
+    return $grandTotal > 0 && (float) $paidAmount >= $grandTotal;
+  }
+
   public function calculateTotals(): void
   {
     /*

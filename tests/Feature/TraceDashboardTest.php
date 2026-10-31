@@ -70,7 +70,7 @@ class TraceDashboardTest extends TestCase
       'purchase_order_id' => $completeOrder->id,
       'title' => 'Invoice selesai',
       'invoice_date' => '2026-07-15',
-      'amount' => 100000,
+      'amount' => 164320,
     ]);
 
     $attention = (new TraceDashboard)->dashboardData()['attention'];

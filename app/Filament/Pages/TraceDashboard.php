@@ -246,10 +246,7 @@ class TraceDashboard extends Dashboard
 
     return $purchaseOrders
       ->filter(function (PurchaseOrder $purchaseOrder) use ($staleSince): bool {
-        $invoiceTotal = (float) $purchaseOrder->progresses->sum('amount');
-        $grandTotal = (float) $purchaseOrder->grand_total;
-
-        if ($grandTotal > 0 && $invoiceTotal >= $grandTotal) {
+        if ($purchaseOrder->isFulfilled()) {
           return false;
         }
 
@@ -315,9 +312,7 @@ class TraceDashboard extends Dashboard
     }
 
     return $project->purchaseOrders->every(function (PurchaseOrder $purchaseOrder): bool {
-      $grandTotal = (float) $purchaseOrder->grand_total;
-
-      return $grandTotal > 0 && (float) $purchaseOrder->progresses->sum('amount') >= $grandTotal;
+      return $purchaseOrder->isFulfilled();
     });
   }
 
