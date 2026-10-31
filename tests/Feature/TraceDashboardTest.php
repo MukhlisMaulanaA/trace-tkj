@@ -120,6 +120,45 @@ class TraceDashboardTest extends TestCase
     $this->assertFalse($attention->contains('title', $purchaseOrder->po_number));
   }
 
+  public function test_attention_ignores_projects_at_100_percent_even_with_an_incomplete_purchase_order(): void
+  {
+    Carbon::setTestNow('2026-09-28 12:00:00');
+    $this->actingAs(User::factory()->create(['project_scope' => 'pusat']));
+
+    $project = Project::create([
+      'nama_project' => 'Project Progress Selesai',
+      'kustomer' => 'Customer A',
+      'lokasi' => 'Jakarta',
+      'nomor_quotation' => 'Q-PROGRESS-COMPLETE',
+    ]);
+    $project->forceFill(['created_at' => '2026-07-01', 'updated_at' => '2026-07-01'])->saveQuietly();
+    $project->progresses()->where('is_system', true)->update(['waktu_progres' => '2026-07-01']);
+    ProjectProgress::create([
+      'project_id' => $project->id,
+      'waktu_progres' => '2026-07-15',
+      'persentase' => 100,
+      'keterangan' => 'Project selesai',
+    ]);
+
+    $purchaseOrder = PurchaseOrder::create([
+      'po_number' => 'PO-INCOMPLETE',
+      'po_date' => '2026-07-01',
+      'project_id' => $project->id,
+    ]);
+    $purchaseOrder->forceFill(['grand_total' => 100000])->saveQuietly();
+    PurchaseOrderProgress::create([
+      'purchase_order_id' => $purchaseOrder->id,
+      'title' => 'Invoice sebagian',
+      'invoice_date' => '2026-07-15',
+      'amount' => 10000,
+    ]);
+
+    $attention = (new TraceDashboard)->dashboardData()['attention'];
+
+    $this->assertFalse($attention->contains('title', $project->nama_project));
+    $this->assertTrue($attention->contains('title', $purchaseOrder->po_number));
+  }
+
   public function test_dashboard_metrics_use_the_selected_period(): void
   {
     Carbon::setTestNow('2026-09-28 12:00:00');

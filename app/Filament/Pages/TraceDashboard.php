@@ -278,12 +278,13 @@ class TraceDashboard extends Dashboard
 
     return $projects
       ->filter(function (Project $project) use ($staleSince): bool {
-        if ($this->isCompletedProject($project)) {
+        $latestProgress = $project->progresses->sortByDesc('waktu_progres')->first();
+
+        if ($latestProgress && (float) $latestProgress->persentase >= 100) {
           return false;
         }
 
-        $lastProgress = $project->progresses->sortByDesc('waktu_progres')->first();
-        $lastActivity = $lastProgress?->waktu_progres ?? $project->created_at;
+        $lastActivity = $latestProgress?->waktu_progres ?? $project->created_at;
 
         return $lastActivity !== null && Carbon::parse($lastActivity)->lte($staleSince);
       })
@@ -301,19 +302,6 @@ class TraceDashboard extends Dashboard
           'url' => ProjectResource::getUrl('view', ['record' => $project]),
         ];
       });
-  }
-
-  private function isCompletedProject(Project $project): bool
-  {
-    $latestProgress = $project->progresses->sortByDesc('waktu_progres')->first();
-
-    if (!$latestProgress || (float) $latestProgress->persentase < 100 || $project->purchaseOrders->isEmpty()) {
-      return false;
-    }
-
-    return $project->purchaseOrders->every(function (PurchaseOrder $purchaseOrder): bool {
-      return $purchaseOrder->isFulfilled();
-    });
   }
 
   private function projectHighlights(Collection $summaries): Collection
