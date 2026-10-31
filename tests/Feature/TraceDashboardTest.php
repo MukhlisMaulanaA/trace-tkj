@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Pages\TraceDashboard;
 use App\Models\PurchaseOrderProgress;
 use App\Models\Project;
+use App\Models\ProjectProgress;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 use Carbon\Carbon;
@@ -78,6 +79,45 @@ class TraceDashboardTest extends TestCase
     $this->assertTrue($attention->contains('title', $noActivityOrder->po_number));
     $this->assertFalse($attention->contains('title', 'PO-RECENT'));
     $this->assertFalse($attention->contains('title', 'PO-COMPLETE'));
+  }
+
+  public function test_attention_ignores_completed_projects_with_fulfilled_purchase_orders(): void
+  {
+    Carbon::setTestNow('2026-09-28 12:00:00');
+    $this->actingAs(User::factory()->create(['project_scope' => 'pusat']));
+
+    $project = Project::create([
+      'nama_project' => 'Project Selesai',
+      'kustomer' => 'Customer A',
+      'lokasi' => 'Jakarta',
+      'nomor_quotation' => 'Q-COMPLETE',
+    ]);
+    $project->forceFill(['created_at' => '2026-07-01', 'updated_at' => '2026-07-01'])->saveQuietly();
+    $project->progresses()->where('is_system', true)->update(['waktu_progres' => '2026-07-01']);
+    ProjectProgress::create([
+      'project_id' => $project->id,
+      'waktu_progres' => '2026-07-15',
+      'persentase' => 100,
+      'keterangan' => 'Project selesai',
+    ]);
+
+    $purchaseOrder = PurchaseOrder::create([
+      'po_number' => 'PO-FULFILLED',
+      'po_date' => '2026-07-01',
+      'project_id' => $project->id,
+    ]);
+    $purchaseOrder->forceFill(['grand_total' => 100000])->saveQuietly();
+    PurchaseOrderProgress::create([
+      'purchase_order_id' => $purchaseOrder->id,
+      'title' => 'Invoice selesai',
+      'invoice_date' => '2026-07-15',
+      'amount' => 100000,
+    ]);
+
+    $attention = (new TraceDashboard)->dashboardData()['attention'];
+
+    $this->assertFalse($attention->contains('title', $project->nama_project));
+    $this->assertFalse($attention->contains('title', $purchaseOrder->po_number));
   }
 
   public function test_dashboard_metrics_use_the_selected_period(): void

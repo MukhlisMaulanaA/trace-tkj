@@ -268,7 +268,7 @@ class TraceDashboard extends Dashboard
           'title' => $purchaseOrder->po_number,
           'date' => Carbon::parse($lastActivity)->timestamp,
           'detail' => $hasProgress
-            ? 'Tidak ada aktivitas pembayaran selama 30 hari.'
+            ? 'Tidak ada aktivitas pembayaran selama 30 hari.'  
             : 'Belum ada aktivitas pembayaran selama 30 hari.',
           'url' => PurchaseOrderResource::getUrl('view', ['record' => $purchaseOrder]),
         ];
@@ -281,6 +281,10 @@ class TraceDashboard extends Dashboard
 
     return $projects
       ->filter(function (Project $project) use ($staleSince): bool {
+        if ($this->isCompletedProject($project)) {
+          return false;
+        }
+
         $lastProgress = $project->progresses->sortByDesc('waktu_progres')->first();
         $lastActivity = $lastProgress?->waktu_progres ?? $project->created_at;
 
@@ -300,6 +304,21 @@ class TraceDashboard extends Dashboard
           'url' => ProjectResource::getUrl('view', ['record' => $project]),
         ];
       });
+  }
+
+  private function isCompletedProject(Project $project): bool
+  {
+    $latestProgress = $project->progresses->sortByDesc('waktu_progres')->first();
+
+    if (!$latestProgress || (float) $latestProgress->persentase < 100 || $project->purchaseOrders->isEmpty()) {
+      return false;
+    }
+
+    return $project->purchaseOrders->every(function (PurchaseOrder $purchaseOrder): bool {
+      $grandTotal = (float) $purchaseOrder->grand_total;
+
+      return $grandTotal > 0 && (float) $purchaseOrder->progresses->sum('amount') >= $grandTotal;
+    });
   }
 
   private function projectHighlights(Collection $summaries): Collection

@@ -199,7 +199,7 @@
     }
 
     .signature-space {
-      height: 72px;
+      height: 114px;
     }
 
     .print-toolbar {
