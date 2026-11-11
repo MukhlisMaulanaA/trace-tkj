@@ -208,7 +208,7 @@
     }
 
     .item-row td {
-      height: 175px;
+      height: 50px;
     }
 
     .item-description {
@@ -494,8 +494,8 @@
     </table>
     <table class="footer-grid">
       <tr>
-        <td><strong>PAYMENT TO THE FOLLOWING ACCOUNT :</strong><br>BANK <span style="margin-left: 44px;">:
-            {{ $bank['bank'] }}</span><br>ACCOUNT NO <span style="margin-left: 16px;">:
+        <td><strong>PAYMENT TO THE FOLLOWING ACCOUNT :</strong><br>BANK <span style="margin-left: 65px;">:
+            {{ $bank['bank'] }}</span><br>ACCOUNT NO <span style="margin-left: 20px;">:
             {{ $bank['account'] }}</span><br>ACCOUNT NAME <span style="margin-left: 4px;">: {{ $bank['name'] }}</span>
         </td>
         <td class="signature">Bekasi, {{ $date(now()) }}<div class="signature-space"></div><strong>( ILHAM JAWAZ
