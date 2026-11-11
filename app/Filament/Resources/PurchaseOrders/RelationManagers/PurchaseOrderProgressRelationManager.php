@@ -287,7 +287,7 @@ class PurchaseOrderProgressRelationManager extends RelationManager
        * Timeline chronological:
        * Invoice terbaru di bawah.
        */
-      ->defaultSort('invoice_date', 'asc')
+      ->defaultSort('created_at', 'desc')
 
       ->paginated(false)
 

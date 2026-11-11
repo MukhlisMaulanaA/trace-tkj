@@ -126,7 +126,7 @@ class ItemsRelationManager extends RelationManager
   public function table(Table $table): Table
   {
     return $table
-      ->defaultSort('item_no', 'asc')
+      ->defaultSort('created_at', 'desc')
       ->defaultGroup(
         Group::make('section')
           ->label('Section')

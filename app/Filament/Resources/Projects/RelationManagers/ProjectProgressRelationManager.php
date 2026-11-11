@@ -80,7 +80,7 @@ class ProjectProgressRelationManager extends RelationManager
        * Timeline harus chronological:
        * Project Created -> progress lama -> progress terbaru.
        */
-      ->defaultSort('waktu_progres', 'asc')
+      ->defaultSort('created_at', 'desc')
 
       ->paginated(false)
 

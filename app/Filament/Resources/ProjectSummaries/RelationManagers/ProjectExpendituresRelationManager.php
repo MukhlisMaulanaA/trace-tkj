@@ -125,7 +125,7 @@ class ProjectExpendituresRelationManager extends RelationManager
           ->openUrlInNewTab()
           ->color('primary'),
       ])
-      ->defaultSort('expenditure_date', 'desc')
+      ->defaultSort('created_at', 'desc')
       ->headerActions([
         CreateAction::make(),
       ])

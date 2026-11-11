@@ -13,7 +13,7 @@ class InvoicesTable
 {
   public static function configure(Table $table): Table
   {
-    return $table->columns([
+    return $table->defaultSort('created_at', 'desc')->columns([
       TextColumn::make('invoice_code')->label('invoice_code')->searchable()->sortable(),
       TextColumn::make('invoice_number')->label('Invoice Number')->searchable()->sortable(),
       TextColumn::make('recipient')->label('To')->searchable(),

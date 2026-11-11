@@ -25,6 +25,7 @@ class ProjectSummaryRelationManager extends RelationManager
   {
     return $table
       ->heading('Project Summary')
+      ->defaultSort('created_at', 'desc')
 
       ->modifyQueryUsing(
         fn(Builder $query): Builder =>

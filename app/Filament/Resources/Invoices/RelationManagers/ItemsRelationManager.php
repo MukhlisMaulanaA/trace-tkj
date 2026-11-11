@@ -41,7 +41,7 @@ class ItemsRelationManager extends RelationManager
 
   public function table(Table $table): Table
   {
-    return $table->paginated(false)->columns([
+    return $table->defaultSort('created_at', 'desc')->paginated(false)->columns([
       TextColumn::make('item_no')->label('No.'),
       TextColumn::make('description')->label('Description')->wrap(),
       TextColumn::make('quantity')->label('QTY')->numeric(decimalPlaces: 2),
