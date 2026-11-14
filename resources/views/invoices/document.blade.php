@@ -155,13 +155,25 @@
 
     .items-table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       table-layout: fixed;
+      padding: 2px;
     }
 
     .items-table th,
     .items-table td {
-      border: 1px solid #111827;
+      border-right: 1px solid #111827;
+      border-top: 1px solid #111827;
+    }
+
+    .items-table th:first-child,
+    .items-table td:first-child {
+      border-left: 1px solid #111827;
+    }
+
+    .items-table tbody tr:last-child td {
+      border-bottom: 1px solid #111827;
     }
 
     .items-table thead {
